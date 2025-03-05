@@ -1,12 +1,10 @@
-use crate::consts::INITIAL_LAMPORTS_FOR_POOL;
-use crate::consts::INITIAL_PRICE_DIVIDER;
-use crate::consts::PROPORTION;
+
 use crate::errors::CustomError;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::system_program;
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
-
+use crate::consts::*;
 #[account]
 pub struct CurveConfiguration {
     pub fees: f64,
@@ -54,6 +52,7 @@ impl BondingCurve {
         dao_quorum: u16,
         locked_liquidity: bool,
         governance: Pubkey,
+        bump: u8,
     ) -> Self {
         Self {
             creator,
@@ -67,7 +66,7 @@ impl BondingCurve {
             governance,
             dao_quorum,
             locked_liquidity,
-            bump: 0,
+            bump,
         }
     }
 }
@@ -129,6 +128,23 @@ pub trait BondingCurveAccount<'info> {
         amount: u64,
         bump: u8,
         system_program: &Program<'info, System>,
+    ) -> Result<()>;
+
+    fn transfer_token_from_pool(
+        &self,
+        from: &Account<'info, TokenAccount>,
+        to: &Account<'info, TokenAccount>,
+        amount: u64,
+        token_program: &Program<'info, Token>,
+    ) -> Result<()>;
+
+    fn transfer_token_to_pool(
+        &self,
+        from: &Account<'info, TokenAccount>,
+        to: &Account<'info, TokenAccount>,
+        amount: u64,
+        authority: &Signer<'info>,
+        token_program: &Program<'info, Token>,
     ) -> Result<()>;
 
 
@@ -279,9 +295,74 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         bump: u8,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
-
+        system_program::transfer(
+            CpiContext::new_with_signer(
+                system_program.to_account_info(),
+                system_program::Transfer {
+                    from: from.clone(),
+                    to: to.to_account_info().clone(),
+                },
+                &[&[
+                    SOL_VAULT_PREFIX.as_bytes(),
+                    self.token.key().as_ref(),
+                    // LiquidityPool::POOL_SEED_PREFIX.as_bytes(),
+                    // self.token.key().as_ref(),
+                    &[bump],
+                ]],
+            ),
+            amount,
+        )?;
         Ok(())
     }
+
+    fn transfer_token_from_pool(
+        &self,
+        from: &Account<'info, TokenAccount>,
+        to: &Account<'info, TokenAccount>,
+        amount: u64,
+        token_program: &Program<'info, Token>,
+    ) -> Result<()> {
+        token::transfer(
+            CpiContext::new_with_signer(
+                token_program.to_account_info(),
+                token::Transfer {
+                    from: from.to_account_info(),
+                    to: to.to_account_info(),
+                    authority: self.to_account_info(),
+                },
+                &[&[
+                    POOL_SEED_PREFIX.as_bytes(),
+                    self.token.key().as_ref(),
+                    &[self.bump],
+                ]],
+            ),
+            amount,
+        )?;
+        Ok(())
+    }
+
+    fn transfer_token_to_pool(
+        &self,
+        from: &Account<'info, TokenAccount>,
+        to: &Account<'info, TokenAccount>,
+        amount: u64,
+        authority: &Signer<'info>,
+        token_program: &Program<'info, Token>,
+    ) -> Result<()> {
+        token::transfer(
+            CpiContext::new(
+                token_program.to_account_info(),
+                token::Transfer {
+                    from: from.to_account_info(),
+                    to: to.to_account_info(),
+                    authority: authority.to_account_info(),
+                },
+            ),
+            amount,
+        )?;
+        Ok(())
+    }
+
 }
 
 pub trait CurveConfigurationAccount<'info> {

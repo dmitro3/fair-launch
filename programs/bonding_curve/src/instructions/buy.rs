@@ -37,7 +37,7 @@ pub struct Buy<'info> {
 
     #[account(
         mut,
-        seeds = [BONDING_CURVE_SEED.as_bytes(), token_mint.key().as_ref()],
+        seeds = [POOL_SEED_PREFIX.as_bytes(), token_mint.key().as_ref()],
         bump = bonding_curve_account.bump,
     )]
     pub bonding_curve_account: Box<Account<'info, BondingCurve>>,

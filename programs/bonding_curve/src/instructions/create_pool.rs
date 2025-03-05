@@ -16,6 +16,7 @@ pub fn create_pool(ctx: Context<CreateLiquidityPool>) -> Result<()> {
         bonding_curve_account.dao_quorum,
         bonding_curve_account.locked_liquidity,
         bonding_curve_account.governance,
+        ctx.bumps.bonding_curve_account
     ));
     Ok(())
 }
