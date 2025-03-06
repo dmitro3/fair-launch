@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-bonding_curve = "HTiVXCCFAUsTeXGQvdx5RPEPbgxRuLXo13QtTrmzaGz1"
+bonding_curve = "A5wTuiYGvpfA5ovqYkmDbcivjAESLeLke5dBVjne1WNq"
 
 [registry]
 url = "https://api.devnet.solana.com"

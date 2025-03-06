@@ -18,7 +18,7 @@ describe("bonding_curve", () => {
   const program = anchor.workspace.BondingCurve as Program<BondingCurve>;
 
   // get existing TokenMint and TokenATA or we can create new token 
-  const mint = new PublicKey("EkScnsR7uVsTvo9kwNKdCYU3ikp6n6MeWPzZMYi1cUFe");
+  const mint = new PublicKey("BU38GveW5z5N61kuazeSJSPJCcQt9fn4SYZboBCxBVpz");
 
   const governance = Keypair.generate();
   const feeRecipient = Keypair.generate();
