@@ -1,20 +1,23 @@
+
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::state::{BondingCurve, CurveConfiguration, BondingCurveAccount};
+use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount};
 use crate::consts::*;
-pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
 
-    // TODO: Implement sell function
+
+
+pub fn add_liquidity(ctx: Context<AddLiquidity>) -> Result<()> {
+    msg!("Trying to add liquidity to the pool");
+
     let bonding_curve = &mut ctx.accounts.bonding_curve_account;
     let user = &ctx.accounts.user;
     let system_program = &ctx.accounts.system_program;
     let token_program = &ctx.accounts.token_program;
     let pool_sol_vault = &mut ctx.accounts.pool_sol_vault;
-
 
     let token_one_accounts = (
         &mut *ctx.accounts.token_mint,
@@ -22,12 +25,14 @@ pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
         &mut *ctx.accounts.user_token_account,
     );
 
-    bonding_curve.sell(token_one_accounts, pool_sol_vault, amount, bump, user, token_program, system_program)?;
+    bonding_curve.add_liquidity(token_one_accounts, pool_sol_vault, user, token_program, system_program)?;
     Ok(())
 }
 
-#[derive(Accounts)] 
-pub struct Sell<'info> {
+
+
+#[derive(Accounts)]
+pub struct AddLiquidity<'info> {
     #[account(
         mut,
         seeds = [CURVE_CONFIGURATION_SEED.as_bytes()],
@@ -38,7 +43,7 @@ pub struct Sell<'info> {
     #[account(
         mut,
         seeds = [POOL_SEED_PREFIX.as_bytes(), token_mint.key().as_ref()],
-        bump = bonding_curve_account.bump
+        bump = bonding_curve_account.bump,
     )]
     pub bonding_curve_account: Box<Account<'info, BondingCurve>>,
 
@@ -61,7 +66,8 @@ pub struct Sell<'info> {
     pub pool_sol_vault: AccountInfo<'info>,
 
     #[account(
-        mut,
+        init_if_needed,
+        payer = user,
         associated_token::mint = token_mint,
         associated_token::authority = user,
     )]
@@ -73,4 +79,5 @@ pub struct Sell<'info> {
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
+
 }

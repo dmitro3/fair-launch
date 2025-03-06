@@ -7,7 +7,7 @@ use anchor_spl::{
 use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount};
 use crate::consts::*;
 
-// todo: base_side 
+
 
 pub fn buy(ctx: Context<Buy>, amount: u64) -> Result<()> {
     msg!("Trying to buy from the pool");
@@ -15,14 +15,16 @@ pub fn buy(ctx: Context<Buy>, amount: u64) -> Result<()> {
     let bonding_curve = &mut ctx.accounts.bonding_curve_account;
     let user = &ctx.accounts.user;
     let system_program = &ctx.accounts.system_program;
+    let token_program = &ctx.accounts.token_program;
     let pool_sol_vault = &mut ctx.accounts.pool_sol_vault;
 
-    let max_pc_amout =  bonding_curve.calculate_buy_cost(amount)?;
-    // TODO: update bonding curve account
-    bonding_curve.total_supply += amount;
-    bonding_curve.reserve_balance += amount;
-    bonding_curve.transfer_sol_to_pool(user, pool_sol_vault, amount, system_program)?;
+    let token_one_accounts = (
+        &mut *ctx.accounts.token_mint,
+        &mut *ctx.accounts.pool_token_account,
+        &mut *ctx.accounts.user_token_account,
+    );
 
+    bonding_curve.buy(token_one_accounts, pool_sol_vault, amount, user, token_program, system_program)?;
     Ok(())
 }
 
@@ -74,7 +76,6 @@ pub struct Buy<'info> {
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
-
 
 }
 

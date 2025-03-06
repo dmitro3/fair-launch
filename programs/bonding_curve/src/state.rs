@@ -11,6 +11,13 @@ pub struct CurveConfiguration {
     pub fee_recipient: Pubkey,
     pub initial_quorum: u64,
     pub use_dao: bool,
+    pub governance: Pubkey,     // Shared governance contract address
+    pub dao_quorum: u16,        // Minimum token quorum (in basis points) for DAO decisions
+    pub locked_liquidity: bool, // Whether liquidity is locked
+    pub target_liquidity: u64, // Threshold to trigger liquidity addition
+    pub fee_percentage: u16,   // Transaction fee in basis points (e.g., 200 = 2%)
+    pub fees_enabled: bool,    // Toggle for enabling/disabling fees
+
 }
 
 impl CurveConfiguration {
@@ -18,12 +25,18 @@ impl CurveConfiguration {
     // Discriminator (8) + f64 (8)
     pub const ACCOUNT_SIZE: usize = 8 + 32 + 8;
 
-    pub fn new(fees: f64, fee_recipient: Pubkey, initial_quorum: u64) -> Self {
+    pub fn new(fees: f64, fee_recipient: Pubkey, initial_quorum: u64, target_liquidity: u64, governance: Pubkey, dao_quorum: u16) -> Self {
         Self {
             fees,
             fee_recipient,
             initial_quorum,
             use_dao: false,
+            governance,
+            dao_quorum,
+            locked_liquidity: false,
+            target_liquidity,
+            fee_percentage: 0,
+            fees_enabled: true,
         }
     }
 }
@@ -33,14 +46,9 @@ pub struct BondingCurve {
     pub creator: Pubkey,
     pub total_supply: u64,     // Tracks the total token supply
     pub reserve_balance: u64,  // Tracks the SOL reserve balance
-    pub target_liquidity: u64, // Threshold to trigger liquidity addition
+    pub reserve_token: u64,    // Tracks the token reserve balance
     pub token: Pubkey,         // Public key of the token in the liquidity pool
-    pub fee_percentage: u16,   // Transaction fee in basis points (e.g., 200 = 2%)
-    pub fees_enabled: bool,    // Toggle for enabling/disabling fees
     pub reserve_ratio: u16,    // Reserve ratio in basis points (default: 50%)
-    pub governance: Pubkey,     // Shared governance contract address
-    pub dao_quorum: u16,        // Minimum token quorum (in basis points) for DAO decisions
-    pub locked_liquidity: bool, // Whether liquidity is locked
     pub bump: u8,               // Bump seed for PDA
 }
 
@@ -48,24 +56,15 @@ impl BondingCurve {
     pub fn new(
         creator: Pubkey,
         token: Pubkey,
-        target_liquidity: u64,
-        dao_quorum: u16,
-        locked_liquidity: bool,
-        governance: Pubkey,
         bump: u8,
     ) -> Self {
         Self {
             creator,
             total_supply: 0,
             reserve_balance: 0,
-            target_liquidity,
+            reserve_token: 0,
             token,
-            fee_percentage: 0,
-            fees_enabled: false,
-            reserve_ratio: 0,
-            governance,
-            dao_quorum,
-            locked_liquidity,
+            reserve_ratio: 50,
             bump,
         }
     }
@@ -79,7 +78,12 @@ pub trait BondingCurveAccount<'info> {
     // Allows adding liquidity by depositing an amount of two tokens and getting back pool shares
     fn add_liquidity(
         &mut self,
-        amount: u64,
+        token_accounts: (
+            &mut Account<'info, Mint>,
+            &mut Account<'info, TokenAccount>,
+            &mut Account<'info, TokenAccount>,
+        ),
+        pool_sol_vault: &mut AccountInfo<'info>,
         authority: &Signer<'info>,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
@@ -88,8 +92,14 @@ pub trait BondingCurveAccount<'info> {
     // Allows removing liquidity by burning pool shares and receiving back a proportionate amount of tokens
     fn remove_liquidity(
         &mut self,
-        amount: u64,
+        token_accounts: (
+            &mut Account<'info, Mint>,
+            &mut Account<'info, TokenAccount>,
+            &mut Account<'info, TokenAccount>,
+        ),
+        pool_sol_account: &mut AccountInfo<'info>,
         authority: &Signer<'info>,
+        bump: u8,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()>;
@@ -97,6 +107,12 @@ pub trait BondingCurveAccount<'info> {
     fn buy(
         &mut self,
         // bonding_configuration_account: &Account<'info, CurveConfiguration>,
+        token_accounts: (
+            &mut Account<'info, Mint>,
+            &mut Account<'info, TokenAccount>,
+            &mut Account<'info, TokenAccount>,
+        ),
+        pool_sol_vault: &mut AccountInfo<'info>,
         amount: u64,
         authority: &Signer<'info>,
         token_program: &Program<'info, Token>,
@@ -106,7 +122,14 @@ pub trait BondingCurveAccount<'info> {
     fn sell(
         &mut self,
         // bonding_configuration_account: &Account<'info, CurveConfiguration>,
+        token_accounts: (
+            &mut Account<'info, Mint>,
+            &mut Account<'info, TokenAccount>,
+            &mut Account<'info, TokenAccount>,
+        ),
+        pool_sol_vault: &mut AccountInfo<'info>,
         amount: u64,
+        bump: u8,
         authority: &Signer<'info>,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
@@ -157,14 +180,19 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
             .checked_add(amount)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
+        msg!("new_supply {}", new_supply);
 
         let new_supply_squared = (new_supply as u128)
             .checked_mul(new_supply as u128)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
+        msg!("new_supply_squared {}", new_supply_squared);
+
         let total_supply_squared = (self.total_supply as u128)
             .checked_mul(self.total_supply as u128)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
+
+        msg!("total_supply_squared {}", total_supply_squared);
 
         let numerator = new_supply_squared
             .checked_sub(total_supply_squared)
@@ -172,13 +200,19 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
             .checked_mul(LAMPORTS_PER_SOL as u128)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
+        msg!("numerator {}", numerator);
+
         let denominator = (self.reserve_ratio as u128)
             .checked_mul(10000)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
+        msg!("denominator {}", denominator);
+
         let cost = numerator
             .checked_div(denominator)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
+
+        msg!("cost {}", cost);
 
         if cost > u64::MAX as u128 {
             return Err(CustomError::OverFlowUnderFlowOccured.into());
@@ -227,43 +261,132 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
 
     fn buy(
         &mut self,
+        // bonding_configuration_account: &Account<'info, CurveConfiguration>,
+        token_accounts: (
+            &mut Account<'info, Mint>,
+            &mut Account<'info, TokenAccount>,
+            &mut Account<'info, TokenAccount>,
+        ),
+        pool_sol_vault: &mut AccountInfo<'info>,
         amount: u64,
         authority: &Signer<'info>,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
+        let amount_out =  self.calculate_buy_cost(amount)?;
+        msg!("amount_out {}", amount_out);
+    
+        // TODO: update bonding curve account
+        self.total_supply += amount;
+        self.reserve_balance += amount;
+        self.transfer_sol_to_pool(authority, pool_sol_vault, amount, system_program)?;
+    
+        self.transfer_token_from_pool(token_accounts.1, token_accounts.2, amount_out, token_program)?;
+
+
         Ok(())
     }
 
     fn sell(
         &mut self,
+        // bonding_configuration_account: &Account<'info, CurveConfiguration>,
+        token_accounts: (
+            &mut Account<'info, Mint>,
+            &mut Account<'info, TokenAccount>,
+            &mut Account<'info, TokenAccount>,
+        ),
+        pool_sol_vault: &mut AccountInfo<'info>,
         amount: u64,
+        bump: u8,
         authority: &Signer<'info>,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
+
+
+        let reward = self.calculate_sell_reward(amount)?;
+        msg!("reward {}", reward);
+
+        self.total_supply -= amount;
+        self.reserve_balance -= reward;
+        self.transfer_token_to_pool(
+            token_accounts.2,
+            token_accounts.1,
+            amount as u64,
+            authority,
+            token_program,
+        )?;
+
+        self.transfer_sol_from_pool(pool_sol_vault, authority, reward, bump, system_program)?;
+
         Ok(())
     }
 
     fn add_liquidity(
         &mut self,
-        amount: u64,
+        token_accounts: (
+            &mut Account<'info, Mint>,
+            &mut Account<'info, TokenAccount>,
+            &mut Account<'info, TokenAccount>,
+        ),
+        pool_sol_vault: &mut AccountInfo<'info>,
         authority: &Signer<'info>,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
+        msg!("Adding liquidity to the pool");
+        msg!("token_accounts.0.supply {}", token_accounts.0.supply);
+        // testing purpose
+
+        self.transfer_token_to_pool(
+            token_accounts.2,
+            token_accounts.1,
+            // token_accounts.0.supply,
+            100000000000,
+            authority,
+            token_program,
+        )?;
+
+        self.transfer_sol_to_pool(
+            authority,
+            pool_sol_vault,
+            INITIAL_LAMPORTS_FOR_POOL,
+            system_program,
+        )?;
+        // self.reserve_token += token_accounts.0.supply;
+        // testing purpose 
+        self.reserve_token += 100000000000;
+        self.reserve_balance += INITIAL_LAMPORTS_FOR_POOL;
+
         Ok(())
     }
 
+    // Allows removing liquidity by burning pool shares and receiving back a proportionate amount of tokens
     fn remove_liquidity(
         &mut self,
-        amount: u64,
+        token_accounts: (
+            &mut Account<'info, Mint>,
+            &mut Account<'info, TokenAccount>,
+            &mut Account<'info, TokenAccount>,
+        ),
+        pool_sol_vault: &mut AccountInfo<'info>,
         authority: &Signer<'info>,
+        bump: u8,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
+
+        self.transfer_token_from_pool(
+            token_accounts.1,
+            token_accounts.2,
+            token_accounts.1.amount as u64,
+            token_program,
+        )?;
+        let amount = pool_sol_vault.to_account_info().lamports() as u64;
+        self.transfer_sol_from_pool(pool_sol_vault, authority, amount, bump, system_program)?;
         Ok(())
     }
+
 
     fn transfer_sol_to_pool(
         &self,
@@ -305,8 +428,6 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
                 &[&[
                     SOL_VAULT_PREFIX.as_bytes(),
                     self.token.key().as_ref(),
-                    // LiquidityPool::POOL_SEED_PREFIX.as_bytes(),
-                    // self.token.key().as_ref(),
                     &[bump],
                 ]],
             ),
