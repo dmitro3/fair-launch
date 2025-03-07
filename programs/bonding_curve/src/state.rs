@@ -73,7 +73,7 @@ impl BondingCurve {
 
 pub trait BondingCurveAccount<'info> {
     fn calculate_buy_cost(&mut self, amount: u64) -> Result<u64>;
-    fn calculate_sell_reward(&mut self, amount: u64) -> Result<u64>;
+    fn calculate_sell_cost(&mut self, amount: u64) -> Result<u64>;
 
     // Allows adding liquidity by depositing an amount of two tokens and getting back pool shares
     fn add_liquidity(
@@ -211,7 +211,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         Ok(cost as u64)
     }
 
-    fn calculate_sell_reward(&mut self, amount: u64) -> Result<u64> {
+    fn calculate_sell_cost(&mut self, amount: u64) -> Result<u64> {
         if amount > self.total_supply {
             return Err(CustomError::InsufficientBalance.into());
         }
@@ -295,11 +295,15 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
     ) -> Result<()> {
 
 
-        let reward = self.calculate_sell_reward(amount)?;
-        msg!("reward {}", reward);
+        let amount_out = self.calculate_sell_cost(amount)?;
+        msg!("reward {}", amount_out);
+        if self.reserve_balance < amount_out {
+            return err!(CustomError::NotEnoughSolInVault);
+        }
+
 
         self.total_supply -= amount;
-        self.reserve_balance -= reward;
+        self.reserve_balance -= amount_out;
         self.transfer_token_to_pool(
             token_accounts.2,
             token_accounts.1,
@@ -308,7 +312,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
             token_program,
         )?;
 
-        self.transfer_sol_from_pool(pool_sol_vault, authority, reward, bump, system_program)?;
+        self.transfer_sol_from_pool(pool_sol_vault, authority, amount_out, bump, system_program)?;
 
         Ok(())
     }

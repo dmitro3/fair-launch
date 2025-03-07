@@ -23,4 +23,7 @@ pub enum CustomError {
     #[msg("Insufficient balance")]
     InsufficientBalance,
 
+    #[msg("Not enough SOL in vault")]
+    NotEnoughSolInVault,
+
 }

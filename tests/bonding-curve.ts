@@ -94,7 +94,6 @@ describe("bonding_curve", () => {
       console.log("Error in initialization :", error)
     }
 
-
   })
 
 
@@ -181,12 +180,12 @@ describe("bonding_curve", () => {
     try {
 
 
-      const { curveConfig, bondingCurve, poolSolVault, poolTokenAccount, userTokenAccount } = await getPDAs(signer.payer.publicKey, mint)
+      const { curveConfig, bondingCurve, poolSolVault, poolTokenAccount, userTokenAccount, bump } = await getPDAs(signer.payer.publicKey, mint)
 
       const tx = new Transaction()
         .add(
           await program.methods
-            .sell(new BN(1000000000), 1)
+            .sell(new BN(1000000), bump)
             .accounts({
               dexConfigurationAccount: curveConfig,
               bondingCurveAccount: bondingCurve,
