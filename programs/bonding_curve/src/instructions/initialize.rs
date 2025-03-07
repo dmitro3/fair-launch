@@ -1,7 +1,5 @@
 use crate::{errors::CustomError, state::*};
 use anchor_lang::prelude::*;
-
-use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use crate::consts::*;
 
 
@@ -9,8 +7,7 @@ use crate::consts::*;
 pub struct InitializeBondingCurve<'info> {
     #[account(
         init,
-        // todo: Calculate correct space for optimizing 
-        space = 8+ 3000,
+        space = CurveConfiguration::ACCOUNT_SIZE,
         payer = admin,
         seeds = [CURVE_CONFIGURATION_SEED.as_bytes()],
         bump,

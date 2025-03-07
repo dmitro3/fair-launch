@@ -1,7 +1,6 @@
 
 use crate::errors::CustomError;
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::system_program;
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use crate::consts::*;
@@ -44,8 +43,8 @@ pub struct CurveConfiguration {
 
 impl CurveConfiguration {
 
-    // Discriminator (8) + f64 (8)
-    pub const ACCOUNT_SIZE: usize = 8 + 32 + 8;
+    // Discriminator (8) + f64(8) + Pubkey(32) + u64(8) + bool(1) + Pubkey(32) + u16(2) + bool(1) + u64(8) + u16(2) + bool(1) + u8(1)
+    pub const ACCOUNT_SIZE: usize = 8 + 8 + 32 + 8 + 1 + 32 + 2 + 1 + 8 + 2 + 1 + 1;
 
     pub fn new(fees: f64, fee_recipient: Pubkey, initial_quorum: u64, target_liquidity: u64, governance: Pubkey, dao_quorum: u16, bonding_curve_type: u8) -> Self {
         let bonding_curve_type = BondingCurveType::try_from(bonding_curve_type).unwrap_or(BondingCurveType::Linear);
@@ -78,6 +77,8 @@ pub struct BondingCurve {
 }
 
 impl BondingCurve {
+    // Discriminator (8) + Pubkey(32) + u64(8) + u64(8) + u64(8) + Pubkey(32) + u16(2) + u8(1)
+    pub const ACCOUNT_SIZE: usize = 8 + 32 + 8 + 8 + 8 + 32 + 2 + 1;
     pub fn new(
         creator: Pubkey,
         token: Pubkey,
@@ -247,6 +248,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         // TODO: update bonding curve account
         self.total_supply += amount;
         self.reserve_balance += amount;
+        self.reserve_token -= amount;
         self.transfer_sol_to_pool(authority, pool_sol_vault, amount, system_program)?;
     
         self.transfer_token_from_pool(token_accounts.1, token_accounts.2, amount_out, token_program)?;
@@ -282,6 +284,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
 
         self.total_supply -= amount;
         self.reserve_balance -= amount_out;
+        self.reserve_token += amount;
         self.transfer_token_to_pool(
             token_accounts.2,
             token_accounts.1,

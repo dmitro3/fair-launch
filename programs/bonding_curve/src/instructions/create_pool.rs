@@ -21,7 +21,7 @@ pub fn create_pool(ctx: Context<CreateLiquidityPool>) -> Result<()> {
 pub struct CreateLiquidityPool<'info> {
     #[account(
         init,
-        space = 8+ 3000,
+        space = BondingCurve::ACCOUNT_SIZE,
         payer = payer,
         seeds = [POOL_SEED_PREFIX.as_bytes(), token_mint.key().as_ref()],
         bump
