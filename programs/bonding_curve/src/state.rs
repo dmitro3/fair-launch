@@ -64,7 +64,7 @@ impl BondingCurve {
             reserve_balance: 0,
             reserve_token: 0,
             token,
-            reserve_ratio: 50,
+            reserve_ratio: 5000,
             bump,
         }
     }
@@ -180,39 +180,29 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
             .checked_add(amount)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
-        msg!("new_supply {}", new_supply);
-
         let new_supply_squared = (new_supply as u128)
             .checked_mul(new_supply as u128)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        msg!("new_supply_squared {}", new_supply_squared);
 
         let total_supply_squared = (self.total_supply as u128)
             .checked_mul(self.total_supply as u128)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
-        msg!("total_supply_squared {}", total_supply_squared);
-
         let numerator = new_supply_squared
             .checked_sub(total_supply_squared)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?
-            .checked_mul(LAMPORTS_PER_SOL as u128)
+            .checked_div(2)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
-        msg!("numerator {}", numerator);
 
         let denominator = (self.reserve_ratio as u128)
             .checked_mul(10000)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
-        msg!("denominator {}", denominator);
 
         let cost = numerator
             .checked_div(denominator)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        msg!("cost {}", cost);
 
         if cost > u64::MAX as u128 {
             return Err(CustomError::OverFlowUnderFlowOccured.into());
@@ -234,6 +224,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         let total_supply_squared = (self.total_supply as u128)
             .checked_mul(self.total_supply as u128)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
+
         let new_supply_squared = (new_supply as u128)
             .checked_mul(new_supply as u128)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
@@ -241,7 +232,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         let numerator = total_supply_squared
             .checked_sub(new_supply_squared)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?
-            .checked_mul(LAMPORTS_PER_SOL as u128)
+            .checked_div(2)
             .ok_or(CustomError::OverFlowUnderFlowOccured)?;
 
         let denominator = (self.reserve_ratio as u128)
