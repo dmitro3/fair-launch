@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-bonding_curve = "Cs6KviV6T3GB7Q7d8YX41LhRYhwaWJgyoSE8TWruFbB5"
+bonding_curve = "5ZgivQGZAxYzSWEfF2B7txmQiDTbXy7xjVuuoJv7LoHC"
 
 [registry]
 url = "https://api.apr.dev"

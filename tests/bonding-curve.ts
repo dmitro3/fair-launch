@@ -39,10 +39,12 @@ describe("bonding_curve", () => {
       const initialQuorum = new BN(500);
       const targetLiquidity = new BN(10000000);
       const daoQuorum = new BN(500);
+      // 0 is linear, 1 is quadratic
+      const bondingCurveType = new BN(0);
       const tx = new Transaction()
         .add(
           await program.methods
-            .initialize(fee, feeRecipient.publicKey, initialQuorum, targetLiquidity, governance.publicKey, daoQuorum)
+            .initialize(fee, feeRecipient.publicKey, initialQuorum, targetLiquidity, governance.publicKey, daoQuorum, bondingCurveType)
             .accounts({
               dexConfigurationAccount: curveConfig,
               admin: signer.payer.publicKey,

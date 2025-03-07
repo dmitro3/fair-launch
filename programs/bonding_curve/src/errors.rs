@@ -26,4 +26,7 @@ pub enum CustomError {
     #[msg("Not enough SOL in vault")]
     NotEnoughSolInVault,
 
+    #[msg("Invalid bonding curve type")]
+    InvalidBondingCurveType,
+
 }

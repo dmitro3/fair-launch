@@ -34,6 +34,7 @@ pub fn initialize(
     target_liquidity: u64,
     governance: Pubkey,
     dao_quorum: u16,
+    bonding_curve_type: u8,
 
 ) -> Result<()> {
     let dex_config = &mut ctx.accounts.dex_configuration_account;
@@ -42,7 +43,7 @@ pub fn initialize(
         return err!(CustomError::InvalidFee);
     }
 
-    dex_config.set_inner(CurveConfiguration::new(fees, fee_recipient, initial_quorum, target_liquidity, governance, dao_quorum));
+    dex_config.set_inner(CurveConfiguration::new(fees, fee_recipient, initial_quorum, target_liquidity, governance, dao_quorum, bonding_curve_type));
 
     Ok(())
 }

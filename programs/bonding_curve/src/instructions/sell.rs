@@ -4,16 +4,20 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::state::{BondingCurve, CurveConfiguration, BondingCurveAccount};
+use crate::state::{BondingCurve, CurveConfiguration, BondingCurveAccount, BondingCurveType};
 use crate::consts::*;
 pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
 
     // TODO: Implement sell function
     let bonding_curve = &mut ctx.accounts.bonding_curve_account;
+    let bonding_curve_configuration = &ctx.accounts.dex_configuration_account;
     let user = &ctx.accounts.user;
     let system_program = &ctx.accounts.system_program;
     let token_program = &ctx.accounts.token_program;
     let pool_sol_vault = &mut ctx.accounts.pool_sol_vault;
+
+    let bonding_curve_type: BondingCurveType = bonding_curve_configuration.bonding_curve_type;
+
 
 
     let token_one_accounts = (
@@ -22,7 +26,7 @@ pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
         &mut *ctx.accounts.user_token_account,
     );
 
-    bonding_curve.sell(token_one_accounts, pool_sol_vault, amount, bump, user, token_program, system_program)?;
+    bonding_curve.sell(token_one_accounts, pool_sol_vault, amount, bump, user, bonding_curve_type, token_program, system_program)?;
     Ok(())
 }
 

@@ -5,6 +5,27 @@ use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::system_program;
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use crate::consts::*;
+use crate::utils::calc::*;
+
+#[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
+pub enum BondingCurveType {
+    Linear,
+    Quadratic,
+    // Polynomial,
+}
+
+impl TryFrom<u8> for BondingCurveType {
+    type Error = anchor_lang::error::Error;
+
+    fn try_from(value: u8) -> Result<Self> {
+        match value {
+            0 => Ok(BondingCurveType::Linear),
+            1 => Ok(BondingCurveType::Quadratic),
+            _ => Err(CustomError::InvalidBondingCurveType.into()),
+        }
+    }
+}
+
 #[account]
 pub struct CurveConfiguration {
     pub fees: f64,
@@ -17,6 +38,7 @@ pub struct CurveConfiguration {
     pub target_liquidity: u64, // Threshold to trigger liquidity addition
     pub fee_percentage: u16,   // Transaction fee in basis points (e.g., 200 = 2%)
     pub fees_enabled: bool,    // Toggle for enabling/disabling fees
+    pub bonding_curve_type: BondingCurveType,
 
 }
 
@@ -25,7 +47,9 @@ impl CurveConfiguration {
     // Discriminator (8) + f64 (8)
     pub const ACCOUNT_SIZE: usize = 8 + 32 + 8;
 
-    pub fn new(fees: f64, fee_recipient: Pubkey, initial_quorum: u64, target_liquidity: u64, governance: Pubkey, dao_quorum: u16) -> Self {
+    pub fn new(fees: f64, fee_recipient: Pubkey, initial_quorum: u64, target_liquidity: u64, governance: Pubkey, dao_quorum: u16, bonding_curve_type: u8) -> Self {
+        let bonding_curve_type = BondingCurveType::try_from(bonding_curve_type).unwrap_or(BondingCurveType::Linear);
+
         Self {
             fees,
             fee_recipient,
@@ -37,6 +61,7 @@ impl CurveConfiguration {
             target_liquidity,
             fee_percentage: 0,
             fees_enabled: true,
+            bonding_curve_type,
         }
     }
 }
@@ -72,8 +97,8 @@ impl BondingCurve {
 
 
 pub trait BondingCurveAccount<'info> {
-    fn calculate_buy_cost(&mut self, amount: u64) -> Result<u64>;
-    fn calculate_sell_cost(&mut self, amount: u64) -> Result<u64>;
+    fn calculate_buy_cost(&mut self, amount: u64, bonding_curve_type: BondingCurveType) -> Result<u64>;
+    fn calculate_sell_cost(&mut self, amount: u64, bonding_curve_type: BondingCurveType) -> Result<u64>;
 
     // Allows adding liquidity by depositing an amount of two tokens and getting back pool shares
     fn add_liquidity(
@@ -115,6 +140,7 @@ pub trait BondingCurveAccount<'info> {
         pool_sol_vault: &mut AccountInfo<'info>,
         amount: u64,
         authority: &Signer<'info>,
+        bonding_curve_type: BondingCurveType,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()>;
@@ -131,6 +157,7 @@ pub trait BondingCurveAccount<'info> {
         amount: u64,
         bump: u8,
         authority: &Signer<'info>,
+        bonding_curve_type: BondingCurveType,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()>;
@@ -174,80 +201,29 @@ pub trait BondingCurveAccount<'info> {
 }
 
 impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
-    fn calculate_buy_cost(&mut self, amount: u64) -> Result<u64> {
-        let new_supply = self
-            .total_supply
-            .checked_add(amount)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
+    fn calculate_buy_cost(&mut self, amount: u64, bonding_curve_type: BondingCurveType) -> Result<u64> {
 
-        let new_supply_squared = (new_supply as u128)
-            .checked_mul(new_supply as u128)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        let total_supply_squared = (self.total_supply as u128)
-            .checked_mul(self.total_supply as u128)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        let numerator = new_supply_squared
-            .checked_sub(total_supply_squared)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?
-            .checked_div(2)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-
-        let denominator = (self.reserve_ratio as u128)
-            .checked_mul(10000)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-
-        let cost = numerator
-            .checked_div(denominator)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        if cost > u64::MAX as u128 {
-            return Err(CustomError::OverFlowUnderFlowOccured.into());
+        if bonding_curve_type == BondingCurveType::Linear {
+            return linear_buy_cost(amount, self.reserve_ratio, self.total_supply);
         }
-
-        Ok(cost as u64)
+        else if bonding_curve_type == BondingCurveType::Quadratic {
+            return quadratic_buy_cost(amount, self.reserve_ratio, self.total_supply);
+        }
+        else {
+            return Err(CustomError::InvalidBondingCurveType.into());
+        }
     }
 
-    fn calculate_sell_cost(&mut self, amount: u64) -> Result<u64> {
-        if amount > self.total_supply {
-            return Err(CustomError::InsufficientBalance.into());
+    fn calculate_sell_cost(&mut self, amount: u64, bonding_curve_type: BondingCurveType) -> Result<u64> {
+        if bonding_curve_type == BondingCurveType::Linear {
+            return linear_sell_cost(amount, self.reserve_ratio, self.total_supply);
         }
-
-        let new_supply = self
-            .total_supply
-            .checked_sub(amount)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        let total_supply_squared = (self.total_supply as u128)
-            .checked_mul(self.total_supply as u128)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        let new_supply_squared = (new_supply as u128)
-            .checked_mul(new_supply as u128)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        let numerator = total_supply_squared
-            .checked_sub(new_supply_squared)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?
-            .checked_div(2)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        let denominator = (self.reserve_ratio as u128)
-            .checked_mul(10000)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        let reward = numerator
-            .checked_div(denominator)
-            .ok_or(CustomError::OverFlowUnderFlowOccured)?;
-
-        if reward > u64::MAX as u128 {
-            return Err(CustomError::OverFlowUnderFlowOccured.into());
+        else if bonding_curve_type == BondingCurveType::Quadratic {
+            return quadratic_sell_cost(amount, self.reserve_ratio, self.total_supply);
         }
-
-        Ok(reward as u64)
+        else {
+            return Err(CustomError::InvalidBondingCurveType.into());
+        }
     }
 
     fn buy(
@@ -261,10 +237,11 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         pool_sol_vault: &mut AccountInfo<'info>,
         amount: u64,
         authority: &Signer<'info>,
+        bonding_curve_type: BondingCurveType,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
-        let amount_out =  self.calculate_buy_cost(amount)?;
+        let amount_out =  self.calculate_buy_cost(amount, bonding_curve_type)?;
         msg!("amount_out {}", amount_out);
     
         // TODO: update bonding curve account
@@ -290,12 +267,13 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         amount: u64,
         bump: u8,
         authority: &Signer<'info>,
+        bonding_curve_type: BondingCurveType,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
 
 
-        let amount_out = self.calculate_sell_cost(amount)?;
+        let amount_out = self.calculate_sell_cost(amount, bonding_curve_type)?;
         msg!("reward {}", amount_out);
         if self.reserve_balance < amount_out {
             return err!(CustomError::NotEnoughSolInVault);

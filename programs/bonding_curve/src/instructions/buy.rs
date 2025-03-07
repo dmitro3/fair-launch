@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount};
+use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount, BondingCurveType};
 use crate::consts::*;
 
 
@@ -13,18 +13,21 @@ pub fn buy(ctx: Context<Buy>, amount: u64) -> Result<()> {
     msg!("Trying to buy from the pool");
     // TODO: Implement buy function
     let bonding_curve = &mut ctx.accounts.bonding_curve_account;
+    let bonding_curve_configuration = &ctx.accounts.dex_configuration_account;
+
     let user = &ctx.accounts.user;
     let system_program = &ctx.accounts.system_program;
     let token_program = &ctx.accounts.token_program;
     let pool_sol_vault = &mut ctx.accounts.pool_sol_vault;
 
+    let bonding_curve_type: BondingCurveType = bonding_curve_configuration.bonding_curve_type;
     let token_one_accounts = (
         &mut *ctx.accounts.token_mint,
         &mut *ctx.accounts.pool_token_account,
         &mut *ctx.accounts.user_token_account,
     );
 
-    bonding_curve.buy(token_one_accounts, pool_sol_vault, amount, user, token_program, system_program)?;
+    bonding_curve.buy(token_one_accounts, pool_sol_vault, amount, user, bonding_curve_type, token_program, system_program)?;
     Ok(())
 }
 
