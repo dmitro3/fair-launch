@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::state::{BondingCurve, CurveConfiguration, BondingCurveAccount, BondingCurveType};
+use crate::state::{BondingCurve, CurveConfiguration, BondingCurveAccount, BondingCurveType, FeePool};
 use crate::consts::*;
 pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
 
@@ -16,9 +16,9 @@ pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
     let token_program = &ctx.accounts.token_program;
     let pool_sol_vault = &mut ctx.accounts.pool_sol_vault;
 
-    let bonding_curve_type: BondingCurveType = bonding_curve_configuration.bonding_curve_type;
-
-
+    let bonding_curve_type: u8 = bonding_curve_configuration.bonding_curve_type.into();
+    let fee_pool_account = &mut ctx.accounts.fee_pool_account;
+    let fee_pool_vault = &mut ctx.accounts.fee_pool_vault;
 
     let token_one_accounts = (
         &mut *ctx.accounts.token_mint,
@@ -26,7 +26,7 @@ pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
         &mut *ctx.accounts.user_token_account,
     );
 
-    bonding_curve.sell(token_one_accounts, pool_sol_vault, amount, bump, user, bonding_curve_type, token_program, system_program)?;
+    bonding_curve.sell(token_one_accounts, pool_sol_vault, fee_pool_account, fee_pool_vault, amount, bump, user, bonding_curve_type, token_program, system_program)?;
     Ok(())
 }
 
@@ -63,6 +63,24 @@ pub struct Sell<'info> {
         bump
     )]
     pub pool_sol_vault: AccountInfo<'info>,
+
+    /// CHECK:
+    #[account(
+        mut,
+        seeds = [FEE_POOL_SEED_PREFIX.as_bytes(), token_mint.key().as_ref()],
+        bump
+    )]
+    pub fee_pool_account: Box<Account<'info, FeePool>>,
+
+
+    /// CHECK:
+    #[account(
+        mut,
+        seeds = [FEE_POOL_VAULT_PREFIX.as_bytes(), token_mint.key().as_ref()],
+        bump
+    )]
+    pub fee_pool_vault: AccountInfo<'info>,
+
 
     #[account(
         mut,

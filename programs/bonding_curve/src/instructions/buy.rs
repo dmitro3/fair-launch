@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount, BondingCurveType};
+use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount, FeePool};
 use crate::consts::*;
 
 
@@ -15,19 +15,22 @@ pub fn buy(ctx: Context<Buy>, amount: u64) -> Result<()> {
     let bonding_curve = &mut ctx.accounts.bonding_curve_account;
     let bonding_curve_configuration = &ctx.accounts.dex_configuration_account;
 
+
     let user = &ctx.accounts.user;
     let system_program = &ctx.accounts.system_program;
     let token_program = &ctx.accounts.token_program;
     let pool_sol_vault = &mut ctx.accounts.pool_sol_vault;
+    let fee_pool_account = &mut ctx.accounts.fee_pool_account;
+    let fee_pool_vault = &mut ctx.accounts.fee_pool_vault;
 
-    let bonding_curve_type: BondingCurveType = bonding_curve_configuration.bonding_curve_type;
+    let bonding_curve_type: u8 = bonding_curve_configuration.bonding_curve_type.into();
     let token_one_accounts = (
         &mut *ctx.accounts.token_mint,
         &mut *ctx.accounts.pool_token_account,
         &mut *ctx.accounts.user_token_account,
     );
 
-    bonding_curve.buy(token_one_accounts, pool_sol_vault, amount, user, bonding_curve_type, token_program, system_program)?;
+    bonding_curve.buy(token_one_accounts, pool_sol_vault, fee_pool_account, fee_pool_vault, amount, user, bonding_curve_type, token_program, system_program)?;
     Ok(())
 }
 
@@ -64,6 +67,22 @@ pub struct Buy<'info> {
         bump
     )]
     pub pool_sol_vault: AccountInfo<'info>,
+
+    /// CHECK:
+    #[account(
+        mut,
+        seeds = [FEE_POOL_SEED_PREFIX.as_bytes(), token_mint.key().as_ref()],
+        bump,
+    )]
+    pub fee_pool_account: Box<Account<'info, FeePool>>,
+
+    /// CHECK:
+    #[account(
+        mut,
+        seeds = [FEE_POOL_VAULT_PREFIX.as_bytes(), token_mint.key().as_ref()],
+        bump
+    )]
+    pub fee_pool_vault: AccountInfo<'info>,
 
     #[account(
         init_if_needed,

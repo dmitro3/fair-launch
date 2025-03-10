@@ -6,14 +6,18 @@ use anchor_spl::{
 };
 use crate::consts::*;
 
-pub fn create_pool(ctx: Context<CreateLiquidityPool>) -> Result<()> {
+pub fn create_pool(ctx: Context<CreateLiquidityPool>, recipients: Vec<Recipient>) -> Result<()> {
     let bonding_curve_account = &mut ctx.accounts.bonding_curve_account;
+    let fee_pool_account = &mut ctx.accounts.fee_pool_account;
 
     bonding_curve_account.set_inner(BondingCurve::new(
         ctx.accounts.payer.key(),
         ctx.accounts.token_mint.key(),
         ctx.bumps.bonding_curve_account
     ));
+
+    fee_pool_account.set_inner(FeePool::new(recipients, ctx.bumps.fee_pool_account)?);
+
     Ok(())
 }
 
@@ -38,6 +42,16 @@ pub struct CreateLiquidityPool<'info> {
         associated_token::authority = bonding_curve_account
     )]
     pub pool_token_account: Box<Account<'info, TokenAccount>>,
+
+    #[account(
+        init,
+        space = 8 + 3000,
+        payer = payer,
+        seeds = [FEE_POOL_SEED_PREFIX.as_bytes(), token_mint.key().as_ref()],
+        bump
+    )]
+    pub fee_pool_account: Box<Account<'info, FeePool>>,
+
 
     #[account(mut)]
     pub payer: Signer<'info>,

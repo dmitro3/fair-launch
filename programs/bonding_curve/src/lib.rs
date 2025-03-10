@@ -8,7 +8,7 @@ pub mod utils;
 
 use crate::instructions::*;
 
-declare_id!("BhqWnKM35kXRg3ksDonxQbi4w1DraDBTURcuGjENA4PH");
+declare_id!("3fw7VuruNhJCHEEM4MrYQ6Tsr2qefqYTzWLWQiVV6DSe");
 
 #[program]
 pub mod bonding_curve {
@@ -36,8 +36,8 @@ pub mod bonding_curve {
         )
     }
 
-    pub fn create_pool(ctx: Context<CreateLiquidityPool>) -> Result<()> {
-        instructions::create_pool(ctx)
+    pub fn create_pool(ctx: Context<CreateLiquidityPool>, recipients: Vec<state::Recipient>) -> Result<()> {
+        instructions::create_pool(ctx, recipients)
     }
 
     pub fn buy(ctx: Context<Buy>, amount: u64) -> Result<()> {
@@ -54,5 +54,14 @@ pub mod bonding_curve {
 
     pub fn remove_liquidity(ctx: Context<RemoveLiquidity>, bump: u8) -> Result<()> {
         instructions::remove_liquidity(ctx, bump)
+    }
+
+    // Only DAO can grant this permission
+    pub fn add_fee_recipient(ctx: Context<AddFeeRecipient>, recipient: Pubkey, share: u16) -> Result<()> {
+        instructions::add_fee_recipient(ctx, recipient, share)
+    }
+
+    pub fn claim_fee(ctx: Context<ClaimFee>, bump: u8) -> Result<()> {
+        instructions::claim_fee(ctx, bump)
     }
 }

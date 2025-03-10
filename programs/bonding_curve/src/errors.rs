@@ -29,4 +29,12 @@ pub enum CustomError {
     #[msg("Invalid bonding curve type")]
     InvalidBondingCurveType,
 
+    #[msg("Recipient already exists")]
+    RecipientAlreadyExists,
+
+    #[msg("Invalid share percentage")]
+    InvalidSharePercentage,
+
+    #[msg("Fee recipient not found")]
+    FeeRecipientNotFound
 }

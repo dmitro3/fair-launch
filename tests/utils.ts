@@ -8,7 +8,8 @@ import fs from "fs";
 const CURVE_CONFIGURATION_SEED = "curve_configuration"
 const POOL_SEED_PREFIX = "bonding_curve"
 const SOL_VAULT_PREFIX = "liquidity_sol_vault"
-
+const FEE_POOL_SEED_PREFIX = "fee_pool"
+const FEE_POOL_VAULT_PREFIX = "fee_pool_vault"
 
 const program = anchor.workspace.BondingCurve as Program<BondingCurve>;
 
@@ -26,7 +27,7 @@ export async function getPDAs(user: PublicKey, mint: PublicKey){
     program.programId
   );
 
-  const [poolSolVault, bump] = PublicKey.findProgramAddressSync(
+  const [poolSolVault, poolSolVaultBump] = PublicKey.findProgramAddressSync(
     [Buffer.from(SOL_VAULT_PREFIX), mint.toBuffer()],
     program.programId
   );
@@ -37,15 +38,28 @@ export async function getPDAs(user: PublicKey, mint: PublicKey){
   const userTokenAccount = await getAssociatedTokenAddress(
     mint, user, true
   )
-  console.log("poolSolVault", poolSolVault.toBase58())
-  console.log("bump", bump)
+
+  const [feePool] = PublicKey.findProgramAddressSync(
+    [Buffer.from(FEE_POOL_SEED_PREFIX), mint.toBuffer()],
+    
+    program.programId
+  )
+
+  const [feePoolVault, feePoolVaultBump] = PublicKey.findProgramAddressSync(
+    [Buffer.from(FEE_POOL_VAULT_PREFIX), mint.toBuffer()],
+    program.programId
+  )
+
   return {
     userTokenAccount,
     curveConfig,
     bondingCurve,
     poolSolVault,
+    poolSolVaultBump,
     poolTokenAccount,
-    bump
+    feePool,
+    feePoolVault,
+    feePoolVaultBump
   };
 }
 
