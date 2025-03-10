@@ -8,7 +8,7 @@ pub mod utils;
 
 use crate::instructions::*;
 
-declare_id!("3fw7VuruNhJCHEEM4MrYQ6Tsr2qefqYTzWLWQiVV6DSe");
+declare_id!("ChNYPWh7iahysHscCesR37994jyGtALBhWevtAqay233");
 
 #[program]
 pub mod bonding_curve {
@@ -57,8 +57,8 @@ pub mod bonding_curve {
     }
 
     // Only DAO can grant this permission
-    pub fn add_fee_recipient(ctx: Context<AddFeeRecipient>, recipient: Pubkey, share: u16) -> Result<()> {
-        instructions::add_fee_recipient(ctx, recipient, share)
+    pub fn add_fee_recipients(ctx: Context<AddFeeRecipient>, recipients: Vec<state::Recipient>) -> Result<()> {
+        instructions::add_fee_recipients(ctx, recipients)
     }
 
     pub fn claim_fee(ctx: Context<ClaimFee>, bump: u8) -> Result<()> {

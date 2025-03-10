@@ -5,19 +5,19 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount, FeePool, FeePoolAccount};
+use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount, FeePool, FeePoolAccount, Recipient};
 use crate::consts::*;
 
 
 
 
-pub fn add_fee_recipient(ctx: Context<AddFeeRecipient>, recipient: Pubkey, share: u16) -> Result<()> {
+pub fn add_fee_recipients(ctx: Context<AddFeeRecipient>, recipients: Vec<Recipient>) -> Result<()> {
     msg!("Trying to add fee recipient");
     // TODO: Implement buy function
     let bonding_curve = &mut ctx.accounts.bonding_curve_account;
     let fee_pool = &mut ctx.accounts.fee_pool_account;
 
-    fee_pool.add_fee_recipient(recipient, share)?;
+    fee_pool.add_fee_recipients(recipients)?;
     Ok(())
 }
 

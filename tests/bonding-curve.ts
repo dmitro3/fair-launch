@@ -20,14 +20,16 @@ describe("bonding_curve", () => {
   const program = anchor.workspace.BondingCurve as Program<BondingCurve>;
   // make sure your key in the correct dir 
   let feeRecipient = getKeypairFromFile(`${os.homedir()}/.config/solana/id2.json`);
-  console.log("User address:", feeRecipient.publicKey.toBase58());
+  let feeRecipient2 = getKeypairFromFile(`${os.homedir()}/.config/solana/id3.json`);
+  console.log("Fee address1 :", feeRecipient.publicKey.toBase58());
+  console.log("Fee address2 :", feeRecipient2.publicKey.toBase58());
   // get existing TokenMint and TokenATA or we can create new token 
   const mint = new PublicKey("BU38GveW5z5N61kuazeSJSPJCcQt9fn4SYZboBCxBVpz");
   //5ZoKnNrLwDw5FSgjuA7S7uSEsYPDHrhPzQ7bUTZxdtSa
 
 
 
-
+  const feeRecipient3 = Keypair.generate();
   const governance = Keypair.generate();
 
 
@@ -112,11 +114,30 @@ describe("bonding_curve", () => {
 
       const { curveConfig, bondingCurve, feePool } = await getPDAs(signer.payer.publicKey, mint)
 
-
+      let recipients = [
+        {
+          address: feeRecipient.publicKey,
+          // 40%
+          share: 4000,
+          amount: new BN(0),
+        },
+        {
+          address: feeRecipient2.publicKey,
+          // 40%
+          share: 4000,
+          amount: new BN(0),
+        },
+        {
+          address: feeRecipient3.publicKey,
+          // 20%
+          share: 2000,
+          amount: new BN(0),
+        }
+      ]
       const tx = new Transaction()
         .add(
           await program.methods
-            .addFeeRecipient(feeRecipients[0].publicKey, 2000)
+            .addFeeRecipients(recipients)
             .accounts({
               dexConfigurationAccount: curveConfig,
               bondingCurveAccount: bondingCurve,
@@ -292,11 +313,11 @@ describe("bonding_curve", () => {
   it(" remove liquidity to the pool", async () => {
 
     try {
-      const { curveConfig, bondingCurve, poolSolVault, poolTokenAccount, userTokenAccount, bump } = await getPDAs(signer.payer.publicKey, mint)
+      const { curveConfig, bondingCurve, poolSolVault, poolTokenAccount, userTokenAccount, poolSolVaultBump } = await getPDAs(signer.payer.publicKey, mint)
       const tx = new Transaction()
         .add(
           await program.methods
-            .removeLiquidity(bump)
+            .removeLiquidity(poolSolVaultBump)
             .accounts({
               dexConfigurationAccount: curveConfig,
               bondingCurveAccount: bondingCurve,

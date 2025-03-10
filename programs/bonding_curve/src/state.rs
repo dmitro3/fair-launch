@@ -576,9 +576,9 @@ impl FeePool {
     }
 }
 
-pub trait FeePoolAccount<'info>{
+pub trait FeePoolAccount<'info> {
     fn calculate_fee(&mut self, amount: u64) -> Result<()>;
-    fn add_fee_recipient(&mut self, recipient: Pubkey, share: u16) -> Result<()>;
+    fn add_fee_recipients(&mut self, recipients: Vec<Recipient>) -> Result<()>;
     fn claim_fee(
         &mut self,
         user: &Signer<'info>,
@@ -591,36 +591,45 @@ pub trait FeePoolAccount<'info>{
 
 impl<'info> FeePoolAccount<'info> for Account<'info, FeePool> {
     fn calculate_fee(&mut self, amount: u64) -> Result<()> {
-        msg!("fee amount {}", amount);
-        msg!("Distributing fees to the recipients");
         // Update total fees collected
         self.total_fees_collected = self
             .total_fees_collected
             .checked_add(amount)
             .ok_or(error!(CustomError::OverFlowUnderFlowOccured))?;
 
-        msg!("total fees collected {}", self.total_fees_collected);
-        msg!("recipients {:?}", self.recipients);
         for recipient in self.recipients.iter_mut() {
             recipient.amount = amount * (recipient.share as u64) / 10000;
         }
+        msg!("total fees collected {}", self.total_fees_collected);
+        msg!("recipients {:?}", self.recipients);
         Ok(())
     }
 
-    fn add_fee_recipient(&mut self, recipient: Pubkey, share: u16) -> Result<()> {
-        match self.recipients.iter_mut().find(|r| r.address == recipient) {
-            Some(existing) => existing.share = share,
-            None => self.recipients.push(Recipient {
-                address: recipient,
-                share,
-                amount: 0,
-            }),
-        }
+    fn add_fee_recipients(&mut self, new_recipients: Vec<Recipient>) -> Result<()> {
 
-        let total_share: u16 = self.recipients.iter().map(|r| r.share).sum();
+        let old_recipients = self.recipients.clone();
+
+        let updated_recipients: Vec<Recipient> = new_recipients
+            .into_iter()
+            .map(|mut new_recipient| {
+
+                if let Some(old_recipient) = old_recipients
+                    .iter()
+                    .find(|r| r.address == new_recipient.address)
+                {
+                    new_recipient.amount = old_recipient.amount;
+                }
+                new_recipient
+            })
+            .collect();
+
+        let total_share: u16 = updated_recipients.iter().map(|r| r.share).sum();
         if total_share != 10000 {
             return err!(CustomError::InvalidSharePercentage);
         }
+        msg!("updated recipients {:?}", updated_recipients);
+        // Update recipients list
+        self.recipients = updated_recipients;
 
         Ok(())
     }
@@ -633,18 +642,13 @@ impl<'info> FeePoolAccount<'info> for Account<'info, FeePool> {
         system_program: &Program<'info, System>,
         bump: u8,
     ) -> Result<()> {
-
         let public_key = user.key();
-        msg!("public key {:?}", public_key);
-        msg!("recipients on claim fee {:?}", self.recipients);
         let recipient = self
             .recipients
             .iter()
             .find(|r| r.address == public_key)
             .ok_or(CustomError::FeeRecipientNotFound)?;
         let amount = recipient.amount;
-        msg!("amount {:?}", amount);
-        msg!("fee pool vault {:?}", fee_pool_vault.to_account_info());
         system_program::transfer(
             CpiContext::new_with_signer(
                 system_program.to_account_info(),
@@ -662,10 +666,13 @@ impl<'info> FeePoolAccount<'info> for Account<'info, FeePool> {
         )?;
 
         // update amount in fee pool
-        self.recipients.iter_mut().find(|r| r.address == public_key).unwrap().amount = 0;
+        self.recipients
+            .iter_mut()
+            .find(|r| r.address == public_key)
+            .unwrap()
+            .amount = 0;
         self.total_fees_collected -= amount;
-        
+
         Ok(())
     }
 }
-
