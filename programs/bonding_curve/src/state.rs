@@ -142,6 +142,7 @@ pub trait BondingCurveAccount<'info> {
             &mut Account<'info, TokenAccount>,
         ),
         pool_sol_vault: &mut AccountInfo<'info>,
+        amount: u64,
         authority: &Signer<'info>,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
@@ -369,19 +370,23 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
             &mut Account<'info, TokenAccount>,
         ),
         pool_sol_vault: &mut AccountInfo<'info>,
+        amount: u64,
         authority: &Signer<'info>,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
         msg!("Adding liquidity to the pool");
-        msg!("token_accounts.0.supply {}", token_accounts.0.supply);
-        // testing purpose
+        // Checking if the amount is greater than 0 and less than token balance
+        let balance = token_accounts.2.amount;
+        msg!("balance {}", balance);
+        if amount == 0 || amount > balance {
+            return err!(CustomError::InvalidAmount);
+        }
 
         self.transfer_token_to_pool(
             token_accounts.2,
             token_accounts.1,
-            // token_accounts.0.supply,
-            100000000000,
+            amount,
             authority,
             token_program,
         )?;
@@ -392,9 +397,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
             INITIAL_LAMPORTS_FOR_POOL,
             system_program,
         )?;
-        // self.reserve_token += token_accounts.0.supply;
-        // testing purpose
-        self.reserve_token += 100000000000;
+        self.reserve_token += amount;
         self.reserve_balance += INITIAL_LAMPORTS_FOR_POOL;
 
         Ok(())
