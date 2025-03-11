@@ -25,8 +25,7 @@ pub struct InitializeBondingCurve<'info> {
 
 pub fn initialize(
     ctx: Context<InitializeBondingCurve>,
-    fees: f64,
-    fee_recipient: Pubkey,
+    fee_percentage: u16,
     initial_quorum: u64,
     target_liquidity: u64,
     governance: Pubkey,
@@ -36,11 +35,7 @@ pub fn initialize(
 ) -> Result<()> {
     let dex_config = &mut ctx.accounts.dex_configuration_account;
 
-    if fees < 0_f64 || fees > 100_f64 {
-        return err!(CustomError::InvalidFee);
-    }
-
-    dex_config.set_inner(CurveConfiguration::new(fees, fee_recipient, initial_quorum, target_liquidity, governance, dao_quorum, bonding_curve_type));
+    dex_config.set_inner(CurveConfiguration::new(initial_quorum, fee_percentage, target_liquidity, governance, dao_quorum, bonding_curve_type));
 
     Ok(())
 }

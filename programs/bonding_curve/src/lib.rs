@@ -8,7 +8,7 @@ pub mod utils;
 
 use crate::instructions::*;
 
-declare_id!("ChNYPWh7iahysHscCesR37994jyGtALBhWevtAqay233");
+declare_id!("3fdhpiNWfrz4MrQsoPgjkML5kiBgc9thUpxjd8KDEcf6");
 
 #[program]
 pub mod bonding_curve {
@@ -16,8 +16,7 @@ pub mod bonding_curve {
 
     pub fn initialize(
         ctx: Context<InitializeBondingCurve>,
-        fee: f64,
-        fee_recipient: Pubkey,
+        fee_percentage: u16,
         initial_quorum: u64,
         target_liquidity: u64,
         governance: Pubkey,
@@ -26,8 +25,7 @@ pub mod bonding_curve {
     ) -> Result<()> {
         instructions::initialize(
             ctx,
-            fee,
-            fee_recipient,
+            fee_percentage,
             initial_quorum,
             target_liquidity,
             governance,

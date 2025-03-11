@@ -24,13 +24,14 @@ pub fn buy(ctx: Context<Buy>, amount: u64) -> Result<()> {
     let fee_pool_vault = &mut ctx.accounts.fee_pool_vault;
 
     let bonding_curve_type: u8 = bonding_curve_configuration.bonding_curve_type.into();
+    let fee_percentage: u16 = bonding_curve_configuration.fee_percentage;
     let token_one_accounts = (
         &mut *ctx.accounts.token_mint,
         &mut *ctx.accounts.pool_token_account,
         &mut *ctx.accounts.user_token_account,
     );
 
-    bonding_curve.buy(token_one_accounts, pool_sol_vault, fee_pool_account, fee_pool_vault, amount, user, bonding_curve_type, token_program, system_program)?;
+    bonding_curve.buy(token_one_accounts, pool_sol_vault, fee_pool_account, fee_pool_vault, amount,fee_percentage, user, bonding_curve_type, token_program, system_program)?;
     Ok(())
 }
 

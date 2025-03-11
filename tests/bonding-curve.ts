@@ -37,7 +37,8 @@ describe("bonding_curve", () => {
 
     try {
       const { curveConfig } = await getPDAs(signer.payer.publicKey, mint)
-      const fee = new BN(100);
+      // Fee Percentage : 100 = 1%
+      const feePercentage = new BN(100);
       const initialQuorum = new BN(500);
       const targetLiquidity = new BN(10000000);
       const daoQuorum = new BN(500);
@@ -46,7 +47,7 @@ describe("bonding_curve", () => {
       const tx = new Transaction()
         .add(
           await program.methods
-            .initialize(fee, feeRecipient.publicKey, initialQuorum, targetLiquidity, governance.publicKey, daoQuorum, bondingCurveType)
+            .initialize(initialQuorum, feePercentage, targetLiquidity, governance.publicKey, daoQuorum, bondingCurveType)
             .accounts({
               dexConfigurationAccount: curveConfig,
               admin: signer.payer.publicKey,

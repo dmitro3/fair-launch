@@ -17,6 +17,8 @@ pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
     let pool_sol_vault = &mut ctx.accounts.pool_sol_vault;
 
     let bonding_curve_type: u8 = bonding_curve_configuration.bonding_curve_type.into();
+    let fee_percentage: u16 = bonding_curve_configuration.fee_percentage;
+    
     let fee_pool_account = &mut ctx.accounts.fee_pool_account;
     let fee_pool_vault = &mut ctx.accounts.fee_pool_vault;
 
@@ -26,7 +28,7 @@ pub fn sell(ctx: Context<Sell>, amount: u64, bump: u8) -> Result<()> {
         &mut *ctx.accounts.user_token_account,
     );
 
-    bonding_curve.sell(token_one_accounts, pool_sol_vault, fee_pool_account, fee_pool_vault, amount, bump, user, bonding_curve_type, token_program, system_program)?;
+    bonding_curve.sell(token_one_accounts, pool_sol_vault, fee_pool_account, fee_pool_vault, amount,fee_percentage, bump, user, bonding_curve_type, token_program, system_program)?;
     Ok(())
 }
 

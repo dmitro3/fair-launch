@@ -36,8 +36,6 @@ impl From<BondingCurveType> for u8 {
 /// CURVE CONFIGURATION ACCOUNT
 #[account]
 pub struct CurveConfiguration {
-    pub fees: f64,
-    pub fee_recipient: Pubkey,
     pub initial_quorum: u64,
     pub use_dao: bool,
     pub governance: Pubkey,     // Shared governance contract address
@@ -54,9 +52,8 @@ impl CurveConfiguration {
     pub const ACCOUNT_SIZE: usize = 8 + 8 + 32 + 8 + 1 + 32 + 2 + 1 + 8 + 2 + 1 + 1;
 
     pub fn new(
-        fees: f64,
-        fee_recipient: Pubkey,
         initial_quorum: u64,
+        fee_percentage: u16,
         target_liquidity: u64,
         governance: Pubkey,
         dao_quorum: u16,
@@ -66,15 +63,13 @@ impl CurveConfiguration {
             BondingCurveType::try_from(bonding_curve_type).unwrap_or(BondingCurveType::Linear);
 
         Self {
-            fees,
-            fee_recipient,
             initial_quorum,
             use_dao: false,
             governance,
             dao_quorum,
             locked_liquidity: false,
             target_liquidity,
-            fee_percentage: 0,
+            fee_percentage,
             fees_enabled: true,
             bonding_curve_type,
         }
@@ -83,8 +78,7 @@ impl CurveConfiguration {
 
 pub trait CurveConfigurationAccount<'info> {
     fn toggle_dao(&mut self) -> Result<()>;
-    fn update_fee(&mut self, fee: f64) -> Result<()>;
-    fn update_fee_recipient(&mut self, fee_recipient: Pubkey) -> Result<()>;
+    fn update_fee_percentage(&mut self, new_fee_percentage: u16) -> Result<()>;
 }
 
 impl<'info> CurveConfigurationAccount<'info> for Account<'info, CurveConfiguration> {
@@ -96,19 +90,15 @@ impl<'info> CurveConfigurationAccount<'info> for Account<'info, CurveConfigurati
         Ok(())
     }
 
-    fn update_fee(&mut self, new_fee: f64) -> Result<()> {
+    fn update_fee_percentage(&mut self, new_fee_percentage: u16) -> Result<()> {
         // Maximum fee is 10%
-        if new_fee <= 1000_f64 {
+        if new_fee_percentage <= 1000_u16 {
             return err!(CustomError::InvalidFee);
         }
-        self.fees = new_fee;
+        self.fee_percentage = new_fee_percentage;
         Ok(())
     }
 
-    fn update_fee_recipient(&mut self, new_fee_recipient: Pubkey) -> Result<()> {
-        self.fee_recipient = new_fee_recipient;
-        Ok(())
-    }
 }
 
 /// BONDING CURVE ACCOUNT
@@ -184,6 +174,7 @@ pub trait BondingCurveAccount<'info> {
         fee_pool_account: &mut Account<'info, FeePool>,
         fee_pool_vault: &mut AccountInfo<'info>,
         amount: u64,
+        fee_percentage: u16,
         authority: &Signer<'info>,
         bonding_curve_type: u8,
         token_program: &Program<'info, Token>,
@@ -202,6 +193,7 @@ pub trait BondingCurveAccount<'info> {
         fee_pool_account: &mut Account<'info, FeePool>,
         fee_pool_vault: &mut AccountInfo<'info>,
         amount: u64,
+        fee_percentage: u16,
         bump: u8,
         authority: &Signer<'info>,
         bonding_curve_type: u8,
@@ -284,13 +276,14 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         fee_pool_account: &mut Account<'info, FeePool>,
         fee_pool_vault: &mut AccountInfo<'info>,
         amount: u64,
+        fee_percentage: u16,
         authority: &Signer<'info>,
         bonding_curve_type: u8,
         token_program: &Program<'info, Token>,
         system_program: &Program<'info, System>,
     ) -> Result<()> {
         let amount_out = self.calculate_buy_cost(amount, bonding_curve_type)?;
-        let fee = amount_out * 100 / 10000;
+        let fee = amount_out * (fee_percentage as u64) / 10000;
 
         msg!("amount_out {}", amount_out);
 
@@ -326,6 +319,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         fee_pool_account: &mut Account<'info, FeePool>,
         fee_pool_vault: &mut AccountInfo<'info>,
         amount: u64,
+        fee_percentage: u16,
         bump: u8,
         authority: &Signer<'info>,
         bonding_curve_type: u8,
@@ -333,7 +327,7 @@ impl<'info> BondingCurveAccount<'info> for Account<'info, BondingCurve> {
         system_program: &Program<'info, System>,
     ) -> Result<()> {
         let amount_out = self.calculate_sell_cost(amount, bonding_curve_type)?;
-        let fee = amount_out * 100 / 10000;
+        let fee = amount_out * (fee_percentage as u64) / 10000;
 
         msg!("reward {}", amount_out);
         if self.reserve_balance < amount_out {

@@ -1,11 +1,8 @@
 
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{Mint, Token, TokenAccount},
-};
+use anchor_spl::token::Mint;
 
-use crate::state::{CurveConfiguration, BondingCurve, BondingCurveAccount, FeePool, FeePoolAccount, Recipient};
+use crate::state::{CurveConfiguration, BondingCurve, FeePool, FeePoolAccount, Recipient};
 use crate::consts::*;
 
 
