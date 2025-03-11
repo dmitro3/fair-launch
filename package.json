@@ -3,7 +3,7 @@
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
         "create-token": "ts-node scripts/create-token.ts",
-        "get-bonding-curve": "ts-node scripts/get-bonding-curve.ts"
+        "fetchData": "ts-node scripts/fetchData.ts"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.30.1",
