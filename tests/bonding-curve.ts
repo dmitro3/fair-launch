@@ -27,7 +27,7 @@ describe("bonding_curve", () => {
   const mint = new PublicKey("BU38GveW5z5N61kuazeSJSPJCcQt9fn4SYZboBCxBVpz");
   //5ZoKnNrLwDw5FSgjuA7S7uSEsYPDHrhPzQ7bUTZxdtSa
 
-
+  const multisig = new PublicKey("97S2XVwgi9fiHJQst9qkN1EeVKbXYy1LUS3MDL3BfxpN");
 
   const feeRecipient3 = Keypair.generate();
   const governance = Keypair.generate();
@@ -129,7 +129,7 @@ describe("bonding_curve", () => {
           amount: new BN(0),
         },
         {
-          address: feeRecipient3.publicKey,
+          address: multisig,
           // 20%
           share: 2000,
           amount: new BN(0),
@@ -186,7 +186,7 @@ describe("bonding_curve", () => {
       tx.feePayer = signer.payer.publicKey
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
       const sig = await sendAndConfirmTransaction(connection, tx, [signer.payer], { skipPreflight: true , commitment: "confirmed"})
-      console.log("Successfully initialized : ", `https://solscan.io/tx/${sig}?cluster=devnet`)
+      console.log("Successfully add liquidity : ", `https://solscan.io/tx/${sig}?cluster=devnet`)
       const userBalance = (await connection.getTokenAccountBalance(userTokenAccount)).value.uiAmount
       const poolBalance = (await connection.getTokenAccountBalance(poolTokenAccount)).value.uiAmount
       console.log("User Balance : ", userBalance)
@@ -268,7 +268,7 @@ describe("bonding_curve", () => {
       tx.feePayer = signer.payer.publicKey
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
       const sig = await sendAndConfirmTransaction(connection, tx, [signer.payer], { skipPreflight: true , commitment: "confirmed"})
-      console.log("Successfully initialized : ", `https://solscan.io/tx/${sig}?cluster=devnet`)
+      console.log("Successfully sell : ", `https://solscan.io/tx/${sig}?cluster=devnet`)
       const userBalance = (await connection.getTokenAccountBalance(userTokenAccount)).value.uiAmount
       const poolBalance = (await connection.getTokenAccountBalance(poolTokenAccount)).value.uiAmount
       console.log("User Balance : ", userBalance)
