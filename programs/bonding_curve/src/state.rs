@@ -48,8 +48,8 @@ pub struct CurveConfiguration {
 }
 
 impl CurveConfiguration {
-    // Discriminator (8) + f64(8) + Pubkey(32) + u64(8) + bool(1) + Pubkey(32) + u16(2) + bool(1) + u64(8) + u16(2) + bool(1) + u8(1)
-    pub const ACCOUNT_SIZE: usize = 8 + 8 + 32 + 8 + 1 + 32 + 2 + 1 + 8 + 2 + 1 + 1;
+    // Discriminator (8) + u64(8) + bool(1) + Pubkey(32) + u16(2) + bool(1) + u64(8) + u16(2) + bool(1) + u8(1)
+    pub const ACCOUNT_SIZE: usize = 8 + 8 + 1 + 32 + 2 + 1 + 8 + 2 + 1 + 1;
 
     pub fn new(
         initial_quorum: u64,

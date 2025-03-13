@@ -62,13 +62,6 @@ export function deserializeCurveConfiguration(data) {
   
     let offset = 8; // Skip the 8-byte discriminator
   
-    // Read each field sequentially
-    const fees = data.readDoubleLE(offset);
-    offset += 8;
-  
-    const feeRecipient = new PublicKey(data.slice(offset, offset + 32)).toBase58();
-    offset += 32;
-  
     const initialQuorum = data.readBigUInt64LE(offset);
     offset += 8;
   
@@ -98,8 +91,6 @@ export function deserializeCurveConfiguration(data) {
   
 
     return {
-      fees,                         // number (f64)
-      feeRecipient,                 // string (base58)
       initialQuorum: initialQuorum.toString(), // string (u64 as string to avoid precision loss)
       useDao,                       // boolean
       governance,                   // string (base58)
