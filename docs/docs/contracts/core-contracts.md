@@ -4,12 +4,12 @@ sidebar_position: 1
 
 # 🔧 Core Contracts
 
-## Factory Contract
+## Program ID
 
-**Contract Address:** `2133PDFLFMiJyzqKU55up2wThH68QjVFjtrtC5Mx91TY`  
+**Program ID:** `2133PDFLFMiJyzqKU55up2wThH68QjVFjtrtC5Mx91TY`  
 **Network:** Testnet
 
-The Factory Contract is the primary smart contract currently deployed in the POTLAUNCH protocol. It serves as the main entry point for token creation and management.
+The Program ID is the primary Solana program currently deployed in the POTLAUNCH protocol. It serves as the main entry point for token creation and management.
 
 ### Key Features
 
@@ -18,7 +18,7 @@ The Factory Contract is the primary smart contract currently deployed in the POT
 
 ### Deployment Processes
 
-The factory contract streamlines the token deployment process by:
+The program streamlines the token deployment process by:
 - Validating token parameters
 - Managing deployment permissions
 - Ensuring proper initialization of new tokens
