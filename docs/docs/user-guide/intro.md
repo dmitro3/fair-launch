@@ -28,9 +28,14 @@ Welcome to **POTLAUNCH** – your platform for community-powered token launches!
 
 ### 🔗 Connecting to the platform
 
-- Visit the dApp: [https://launch.potlock.io/](https://launch.potlock.io/)
+- Visit the dApp: [POTLAUNCH](https://potlaunch.com/)
 - Click **Connect Wallet** at the top right.
 - Select Phantom and approve the connection.
+
+**Available Environments:**
+- 🌐 **Production:** [POTLAUNCH](https://potlaunch.com/)
+- 🧪 **Testnet:** [testnet.potlaunch.com](https://testnet.potlaunch.com/)
+- 🔧 **Staging:** [staging.potlaunch.com](https://staging.potlaunch.com/)
 
 
 ## 🎯 Use Cases

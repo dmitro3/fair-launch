@@ -6,7 +6,7 @@ sidebar_position: 2
 
 ## 🪙 How to create a token
 
-1. Go to [POTLAUNCH](https://launch.potlock.io/) and click on **Token Creator** in the navigation bar.
+1. Go to [POTLAUNCH](https://potlaunch.com) and click on **Token Creator** in the navigation bar.
 2. 🦊 **Connect your wallet** (Connect Wallet).
 3. 🧩 **Select a token template** that fits your purpose.
 4. 🔄 **Select an exchange**.
@@ -25,8 +25,8 @@ sidebar_position: 2
 
 ## 👀 Viewing existing tokens
 
-- To see the tokens you have created, go to [My Tokens](https://launch.potlock.io/my-tokens).
-- To explore all tokens on the platform, visit the [Token Launchpad](https://launch.potlock.io).
+- To see the tokens you have created, go to [My Tokens](https://https://potlaunch.com/my-tokens).
+- To explore all tokens on the platform, visit the [Token Launchpad](https://https://potlaunch.com).
 
 ## Trading tokens on the platform
 

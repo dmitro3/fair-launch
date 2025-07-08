@@ -148,6 +148,14 @@ const config: Config = {
             {
               label: '🔒 POTLAUNCH',
               href: 'https://potlaunch.com',
+            },
+            {
+              label: '🧪 Testnet',
+              href: 'https://testnet.potlaunch.com',
+            },
+            {
+              label: '🔧 Staging',
+              href: 'https://staging.potlaunch.com',
             }
           ],
         },
