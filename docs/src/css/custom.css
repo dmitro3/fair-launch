@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
 /**
  * Any CSS included here will be global. The classic template
  * bundles Infima by default. Infima is a CSS framework designed to
@@ -6,30 +7,155 @@
 
 /* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #2563eb;
-  --ifm-color-primary-dark: #1d4ed8;
-  --ifm-color-primary-darker: #1e40af;
-  --ifm-color-primary-darkest: #1e3a8a;
-  --ifm-color-primary-light: #3b82f6;
-  --ifm-color-primary-lighter: #60a5fa;
-  --ifm-color-primary-lightest: #93c5fd;
+  --ifm-color-primary: #ff9800; 
+  --ifm-color-primary-dark: #e68900;
+  --ifm-color-primary-darker: #b36b00;
+  --ifm-color-primary-darkest: #7a4800;
+  --ifm-color-primary-light: #ffb84d;
+  --ifm-color-primary-lighter: #ffd699;
+  --ifm-color-primary-lightest: #fff3e0;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  font-family: 'Space Grotesk', sans-serif;
+  --potlaunch-card-radius: 18px;
+  --potlaunch-card-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #60a5fa;
-  --ifm-color-primary-dark: #3b82f6;
-  --ifm-color-primary-darker: #2563eb;
-  --ifm-color-primary-darkest: #1d4ed8;
-  --ifm-color-primary-light: #93c5fd;
-  --ifm-color-primary-lighter: #bfdbfe;
-  --ifm-color-primary-lightest: #dbeafe;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --ifm-color-primary: #ff9800;
+  --ifm-color-primary-dark: #e68900;
+  --ifm-color-primary-darker: #b36b00;
+  --ifm-color-primary-darkest: #7a4800;
+  --ifm-color-primary-light: #ffb84d;
+  --ifm-color-primary-lighter: #ffd699;
+  --ifm-color-primary-lightest: #fff3e0;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+  background: #1b1b1d;
+  color: #f5f5f5;
+
+  .hero {
+    background: #1b1b1d;
+  }
+
+  .hero__title, .hero__subtitle {
+    color: #fff;
+  }
+  .features_t9lD {
+    background: #1b1b1d;
+  }
+
+  .theme-layout-footer {
+    background-color: #1b1b1d !important;
+    margin-top: 30px;
+    border-top: 1px solid #3131317c;
+  }
+
+  .footer__title {
+    color: #fff;
+  }
+
+  .footer__items {
+    color: #fff;
+  }
+
+  .footer__link-item {
+    color: #fff;
+  }
+
+  .footer__copyright a {
+    color: #fff !important;
+  }
+
+  .footer__copyright {
+    color:#fff !important;
+  }
+
 }
 
-/* Make the POTLOCK footer link white */
+
+/* Button style */
+.button, .button--primary, button, input[type="submit"] {
+  border-radius: 999px;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px 0 rgba(255,152,0,0.08);
+  transition: background 0.2s;
+  border: none;
+}
+
+.button:hover, .button--primary:hover, button:hover, input[type="submit"]:hover {
+  background: var(--ifm-color-primary-dark);
+}
+
+/* Heading style */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Input style */
+input, textarea, select {
+  border-radius: 12px;
+  border: 1px solid #ececec;
+  padding: 0.5em 1em;
+  font-family: inherit;
+  background: #fff;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.03);
+  transition: border 0.2s;
+}
+input:focus, textarea:focus, select:focus {
+  border: 1.5px solid var(--ifm-color-primary);
+  outline: none;
+}
+
+/* Progress bar style */
+.progress-bar, .progressBar, .theme-doc-progress-bar {
+  background: var(--ifm-color-primary);
+  border-radius: 999px;
+  height: 8px;
+}
+
+/* Badge/Tag style */
+.badge, .tag, .badge--primary, .badge--secondary {
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #222;
+  font-size: 0.85em;
+  padding: 0.2em 0.8em;
+  font-weight: 500;
+  border: none;
+}
+.badge--primary {
+  background: var(--ifm-color-primary);
+  color: #fff;
+}
+
+.theme-layout-footer {
+  background-color: #fafafa !important;
+  margin-top: 30px;
+  border-top: 1px solid #fbf8f8;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.08);
+}
+
+.footer__title {
+  color: #181818;
+}
+
+.footer__items {
+  color: #181818;
+}
+
+.footer__link-item {
+  color: #181818;
+}
+
 .footer__copyright a {
-  color: #fff !important;
+  color: #181818 !important;
+}
+
+.footer__copyright {
+  color:#181818 !important;
 }

@@ -4,10 +4,13 @@ sidebar_position: 1
 
 # 🔧 Core Contracts
 
-## Program ID
+## Program IDs
 
-**Program ID:** `2133PDFLFMiJyzqKU55up2wThH68QjVFjtrtC5Mx91TY`  
-**Network:** Testnet
+| Environment   | Program ID                                   | Solscan Link                                                                                                   | Source Code                                                                                                   |
+|--------------|-----------------------------------------------|----------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Testnet      | `CB18NKSvKunD2xeuvEkKfBxuz4fJFJJ8GPy5w1dMzN1` | <a href="https://solscan.io/account/CB18NKSvKunD2xeuvEkKfBxuz4fJFJJ8GPy5w1dMzN1?cluster=devnet" target="_blank" rel="noopener noreferrer">View on Solscan</a>     | <a href="https://github.com/PotLock/fair-launch/tree/feat/add-migrate/solana-contract" target="_blank" rel="noopener noreferrer">View on GitHub</a> |
+| Staging      | `CB18NKSvKunD2xeuvEkKfBxuz4fJFJJ8GPy5w1dMzN1` | <a href="https://solscan.io/account/CB18NKSvKunD2xeuvEkKfBxuz4fJFJJ8GPy5w1dMzN1?cluster=devnet" target="_blank" rel="noopener noreferrer">View on Solscan</a>     | <a href="https://github.com/PotLock/fair-launch/tree/feat/add-migrate/solana-contract" target="_blank" rel="noopener noreferrer">View on GitHub</a> |
+| Production   | `CB18NKSvKunD2xeuvEkKfBxuz4fJFJJ8GPy5w1dMzN1` | <a href="https://solscan.io/account/CB18NKSvKunD2xeuvEkKfBxuz4fJFJJ8GPy5w1dMzN1" target="_blank" rel="noopener noreferrer">View on Solscan</a>                    | <a href="https://github.com/PotLock/fair-launch/tree/feat/add-migrate/solana-contract" target="_blank" rel="noopener noreferrer">View on GitHub</a> |
 
 The Program ID is the primary Solana program currently deployed in the POTLAUNCH protocol. It serves as the main entry point for token creation and management.
 
