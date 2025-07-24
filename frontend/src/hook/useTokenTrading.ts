@@ -9,111 +9,73 @@ import { BN } from "bn.js";
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddress,
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import useAnchorProvider from "./useAnchorProvider";
 import { getPDAs } from "../utils/sol";
 import toast from "react-hot-toast";
 
 export const useTokenTrading = () => {
-  const { connection, program } = useAnchorProvider();
+  const provider = useAnchorProvider();
   const anchorWallet = useAnchorWallet();
 
   const buyToken = useCallback(
     async (
       mint: PublicKey,
       amount: number,
-      admin?: PublicKey,
-      feeRecipient?: PublicKey,
-      feeRecipient2?: PublicKey,
-      multisig?: PublicKey
+      admin: PublicKey,
+      tokenName: string
     ) => {
-      if (!anchorWallet?.publicKey || !connection || !program) {
+      if (!anchorWallet?.publicKey || !provider?.connection || !provider?.program) {
         throw new Error("Required dependencies not available");
       }
 
+      let tx = new Transaction()
+
       try {
-        console.log("Before Buy from the pool with SPL token");
-        
-        const adminKey = admin || new PublicKey("Yo8A62FyZT4goufRRhDU6ENy3pLSVWEgFxe2SQhn5u6");
-        const { curveConfig, bondingCurve, poolSolVault, poolTokenAccount, userTokenAccount } = 
-          await getPDAs(adminKey, mint, program);
-        
-        console.log("curveConfig", curveConfig.toBase58());
-        console.log("bondingCurve", bondingCurve.toBase58());
-        console.log("poolSolVault", poolSolVault.toBase58());
-        console.log("poolTokenAccount", poolTokenAccount.toBase58());
-        console.log("userTokenAccount", userTokenAccount.toBase58());
+        const { curveConfig, bondingCurve, poolSolVault, poolTokenAccount, userTokenAccount } = getPDAs(admin, mint)
 
-        const userBalanceBefore = (await connection.getTokenAccountBalance(userTokenAccount)).value.uiAmount;
-        console.log("User Balance Before Buy: ", userBalanceBefore);
-
-        const poolBalanceBefore = (await connection.getTokenAccountBalance(poolTokenAccount)).value.uiAmount;
-        console.log("Pool Balance Before Buy: ", poolBalanceBefore);
-
-        if (feeRecipient) {
-          const feeRecipientBalanceBefore = (await connection.getBalance(feeRecipient));
-          console.log("Fee Recipient Balance Before Buy: ", feeRecipientBalanceBefore);
+        const associatedTokenAddress = await getAssociatedTokenAddress(mint, anchorWallet.publicKey);
+        try {
+            const accountInfo = await provider.connection.getAccountInfo(associatedTokenAddress);
+            if (!accountInfo) {
+              tx.add(createAssociatedTokenAccountInstruction(
+                anchorWallet.publicKey, associatedTokenAddress, anchorWallet.publicKey, mint
+              ));
+            }
+        } catch (error) {
+          console.log("error in getAssociatedTokenAddress")
         }
-
-        if (feeRecipient2) {
-          const feeRecipient2BalanceBefore = (await connection.getBalance(feeRecipient2));
-          console.log("Fee Recipient 2 Balance Before Buy: ", feeRecipient2BalanceBefore);
-        }
-
-        if (multisig) {
-          const multisigBalanceBefore = (await connection.getBalance(multisig));
-          console.log("Multisig Balance Before Buy: ", multisigBalanceBefore);
-        }
-
-        const tx = new Transaction().add(
-          await program.methods
-            .buy(new BN(amount))
-            .accountsStrict({
+            
+        tx.add(await provider.program.methods.buy(new BN(amount))
+            .accountsStrict({              
               bondingCurveConfiguration: curveConfig,
-              bondingCurveAccount: bondingCurve,
+              bondingCurveAccount: bondingCurve,              
               tokenMint: mint,
-              tokenProgram: TOKEN_PROGRAM_ID,
+              tokenProgram: TOKEN_PROGRAM_ID,              
               associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-              poolSolVault: poolSolVault,
+              poolSolVault: poolSolVault,              
               poolTokenAccount: poolTokenAccount,
               userTokenAccount: userTokenAccount,
               user: anchorWallet.publicKey,
-              systemProgram: SystemProgram.programId,
+              systemProgram: SystemProgram.programId
             })
             .instruction()
         );
 
         tx.feePayer = anchorWallet.publicKey;
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.recentBlockhash = (await provider.connection.getLatestBlockhash()).blockhash;
         
         const signedTx = await anchorWallet.signTransaction(tx);
         const rawTx = signedTx.serialize();
-        const sig = await connection.sendRawTransaction(rawTx);
-        await connection.confirmTransaction(sig);
+        const sig = await provider.connection.sendRawTransaction(rawTx);
+        await provider.connection.confirmTransaction(sig);
         
         console.log("Successfully buy : ", `https://solscan.io/tx/${sig}?cluster=devnet`);
         
-        const userBalance = (await connection.getTokenAccountBalance(userTokenAccount)).value.uiAmount;
-        const poolBalance = (await connection.getTokenAccountBalance(poolTokenAccount)).value.uiAmount;
-        console.log("User Balance After Buy: ", userBalance);
-        console.log("Pool Balance After Buy: ", poolBalance);
 
-        if (feeRecipient) {
-          const feeRecipientBalanceAfter = (await connection.getBalance(feeRecipient));
-          console.log("Fee Recipient Balance After Buy: ", feeRecipientBalanceAfter);
-        }
-        
-        if (feeRecipient2) {
-          const feeRecipient2BalanceAfter = (await connection.getBalance(feeRecipient2));
-          console.log("Fee Recipient 2 Balance After Buy: ", feeRecipient2BalanceAfter);
-        }
-        
-        if (multisig) {
-          const multisigBalanceAfter = (await connection.getBalance(multisig));
-          console.log("Multisig Balance After Buy : ", multisigBalanceAfter);
-        }
-
-        toast.success("Token purchased successfully!");
+        toast.success(`Buy ${tokenName} successfully!`);
         return sig;
 
       } catch (error) {
@@ -122,99 +84,61 @@ export const useTokenTrading = () => {
         throw error;
       }
     },
-    [anchorWallet, connection, program]
+    [anchorWallet, provider]
   );
 
   const sellToken = useCallback(
     async (
       mint: PublicKey,
-      amount: typeof BN,
-      admin?: PublicKey,
-      feeRecipient?: PublicKey,
-      feeRecipient2?: PublicKey,
-      multisig?: PublicKey
+      amount: number,
+      admin: PublicKey,
+      tokenName: string,
+      feeRecipients?: PublicKey[]
     ) => {
-      if (!anchorWallet?.publicKey || !connection || !program) {
+      if (!anchorWallet?.publicKey || !provider?.connection || !provider?.program) {
         throw new Error("Required dependencies not available");
       }
 
       try {
-        console.log("Before Sell from the pool with SPL token");
-        
-        const adminKey = admin || anchorWallet.publicKey;
-        const { curveConfig, bondingCurve, poolSolVault, poolTokenAccount, userTokenAccount, poolSolVaultBump } = 
-          await getPDAs(adminKey, mint, program);
+        const { curveConfig, bondingCurve, poolSolVault, poolTokenAccount, userTokenAccount, poolSolVaultBump } = getPDAs(admin, mint)
 
-        const userBalanceBefore = (await connection.getTokenAccountBalance(userTokenAccount)).value.uiAmount;
-        console.log("User Balance Before Sell: ", userBalanceBefore);
-
-        const poolBalanceBefore = (await connection.getTokenAccountBalance(poolTokenAccount)).value.uiAmount;
-        console.log("Pool Balance Before Sell: ", poolBalanceBefore);
-
-        if (feeRecipient) {
-          const feeRecipientBalanceBefore = (await connection.getBalance(feeRecipient));
-          console.log("Fee Recipient Balance Before Sell: ", feeRecipientBalanceBefore);
-        }
-
-        if (feeRecipient2) {
-          const feeRecipient2BalanceBefore = (await connection.getBalance(feeRecipient2));
-          console.log("Fee Recipient 2 Balance Before Sell: ", feeRecipient2BalanceBefore);
-        }
-
-        if (multisig) {
-          const multisigBalanceBefore = (await connection.getBalance(multisig));
-          console.log("Multisig Balance Before Sell: ", multisigBalanceBefore);
-        }
-
-        const tx = new Transaction().add(
-          await program.methods
-            .sell(amount, poolSolVaultBump)
-            .accountsStrict({
-              bondingCurveConfiguration: curveConfig,
-              bondingCurveAccount: bondingCurve,
-              tokenMint: mint,
-              tokenProgram: TOKEN_PROGRAM_ID,
-              associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-              poolSolVault: poolSolVault,
-              poolTokenAccount: poolTokenAccount,
-              userTokenAccount: userTokenAccount,
-              user: anchorWallet.publicKey,
-              systemProgram: SystemProgram.programId,
-            })
-            .instruction()
-        );
+        const tx = new Transaction()
+          .add(
+            await provider.program.methods
+              .sell(new BN(amount), poolSolVaultBump)
+              .accountsStrict({
+                bondingCurveConfiguration: curveConfig,
+                bondingCurveAccount: bondingCurve,
+                tokenMint: mint,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                poolSolVault: poolSolVault,
+                poolTokenAccount: poolTokenAccount,
+                userTokenAccount: userTokenAccount,
+                user: anchorWallet.publicKey,
+                systemProgram: SystemProgram.programId
+              })
+              .remainingAccounts(
+                feeRecipients ? feeRecipients.map(recipient => ({
+                  pubkey: recipient,
+                  isWritable: true,
+                  isSigner: false,
+                })) : []
+              )
+              .instruction()
+          );
 
         tx.feePayer = anchorWallet.publicKey;
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        tx.recentBlockhash = (await provider.connection.getLatestBlockhash()).blockhash;
         
         const signedTx = await anchorWallet.signTransaction(tx);
         const rawTx = signedTx.serialize();
-        const sig = await connection.sendRawTransaction(rawTx);
-        await connection.confirmTransaction(sig);
+        const sig = await provider.connection.sendRawTransaction(rawTx);
+        await provider.connection.confirmTransaction(sig);
         
         console.log("Successfully sell : ", `https://solscan.io/tx/${sig}?cluster=devnet`);
-        
-        const userBalance = (await connection.getTokenAccountBalance(userTokenAccount)).value.uiAmount;
-        const poolBalance = (await connection.getTokenAccountBalance(poolTokenAccount)).value.uiAmount;
-        console.log("User Balance After Sell: ", userBalance);
-        console.log("Pool Balance After Sell: ", poolBalance);
 
-        if (feeRecipient) {
-          const feeRecipientBalanceAfter = (await connection.getBalance(feeRecipient));
-          console.log("Fee Recipient Balance After Sell: ", feeRecipientBalanceAfter);
-        }
-        
-        if (feeRecipient2) {
-          const feeRecipient2BalanceAfter = (await connection.getBalance(feeRecipient2));
-          console.log("Fee Recipient 2 Balance After Sell: ", feeRecipient2BalanceAfter);
-        }
-        
-        if (multisig) {
-          const multisigBalanceAfter = (await connection.getBalance(multisig));
-          console.log("Multisig Balance After Sell : ", multisigBalanceAfter);
-        }
-
-        toast.success("Token sold successfully!");
+        toast.success(`Sell ${tokenName} successfully!`);
         return sig;
 
       } catch (error) {
@@ -223,11 +147,11 @@ export const useTokenTrading = () => {
         throw error;
       }
     },
-    [anchorWallet, connection, program]
+    [anchorWallet, provider]
   );
 
   return {
     buyToken,
-    sellToken,
+    sellToken
   };
 }; 

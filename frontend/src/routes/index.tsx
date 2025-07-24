@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TokenCard } from "../components/TokenCard";
-import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAllTokensCreatedByBondingCurve, getTokenInfo, TokenInfo } from "../utils/tokenUtils";
+import { TokenInfo } from "../utils/tokenUtils";
+import { getTokens } from "../lib/api";
+import { formatDateToReadable, getTemplateDisplay } from "../utils";
 
 export const Route = createFileRoute("/")({
     component: Home,
@@ -18,26 +19,8 @@ function Home() {
       try {
         setLoading(true);
         setError(null);
-        
-        // Get all token mint addresses created by bonding curve
-        const mintAddresses = await getAllTokensCreatedByBondingCurve();
-        console.log('Found mint addresses:', mintAddresses);
-        
-        // Fetch detailed information for each token
-        const tokenPromises = mintAddresses.map(async (mintAddress) => {
-          try {
-            const tokenInfo = await getTokenInfo(mintAddress);
-            return tokenInfo;
-          } catch (error) {
-            console.error(`Error fetching token info for ${mintAddress}:`, error);
-            return null;
-          }
-        });
-        
-        const tokenResults = await Promise.all(tokenPromises);
-        const validTokens = tokenResults.filter(token => token !== null) as TokenInfo[];
-        
-        setTokens(validTokens);
+        const tokens = await getTokens();
+        setTokens(tokens.data);
       } catch (error) {
         console.error('Error fetching tokens:', error);
         setError('Failed to load tokens. Please try again later.');
@@ -51,7 +34,7 @@ function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] py-10">
+      <div className="min-h-screen py-10">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-black mb-2">Token Launchpad</h1>
           <p className="text-gray-500 mb-8 text-base">
@@ -67,7 +50,7 @@ function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] py-10">
+      <div className="min-h-screen py-10">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-black mb-2">Token Launchpad</h1>
           <p className="text-gray-500 mb-8 text-base">
@@ -90,7 +73,7 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-10">
+    <div className="min-h-screen py-10">
       <div className="max-w-7xl mx-auto px-4">
         <h1 className="text-3xl font-bold text-black mb-2">Token Launchpad</h1>
         <p className="text-gray-500 mb-8 text-base">
@@ -105,19 +88,20 @@ function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {tokens.map((token) => (
               <TokenCard
-                avatar={token.avatar || "/curate.png"}
-                banner={token.banner || token.avatar || "/curate.png"}
+                decimals={token.decimals}
+                avatar={token.avatarUrl || "/curate.png"}
+                banner={token.bannerUrl || token.avatarUrl || "/curate.png"}
                 key={token.id}
-                type={'Bonding Curve Token'}
-                progress={10}
+                type={getTemplateDisplay(token.selectedTemplate || 'meme')}
+                progress={0}
                 name={token.name}
                 symbol={token.symbol}
                 description={token.description || "No description available"}
                 supply={token.supply.toString()}
-                address={token.id}
-                createdOn={token.createdOn}
-                externalLabel="View on Explorer"
-                value={token.id}
+                address={token.mintAddress || ''}
+                createdOn={formatDateToReadable(token.createdAt || '')}
+                externalLabel={token.launchLiquidityOnName || ''}
+                value={token.mintAddress || ''}
               />
             ))}
           </div>

@@ -3,15 +3,16 @@ import { useState } from 'react';
 import { useDeployStore } from '../../../stores/deployStores';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { getExchangeDisplay } from '../../../utils';
+import type { StepProps } from '../../../types';
 
 type SectionKey = keyof typeof defaultExpanded;
 const defaultExpanded = {
     tokenDetails: true,
-    tokenDistribution: false,
-    tokenReleaseSchedule: false,
-    priceMechanism: false,
-    dexListingSetup: false,
-    tokenSaleSetup: false,
+    tokenDistribution: true,
+    tokenReleaseSchedule: true,
+    priceMechanism: true,
+    dexListingSetup: true,
+    tokenSaleSetup: true,
 };
 
 const SectionHeader = ({ title, sectionKey, expanded, onClick }: { title: string, sectionKey: SectionKey, expanded: boolean, onClick: (section: SectionKey) => void }) => (
@@ -24,10 +25,10 @@ const SectionHeader = ({ title, sectionKey, expanded, onClick }: { title: string
     </div>
 );
 
-export const ReviewAndDeploy = () => {
+export const ReviewAndDeploy = ({ isExpanded, stepKey, onHeaderClick }: StepProps) => {
     const state = useDeployStore();
     const [expanded, setExpanded] = useState<typeof defaultExpanded>(defaultExpanded);
-    const [isExpanded, setIsExpanded] = useState<boolean>(false);
+    const [isExpandedState, setIsExpandedState] = useState<boolean>(false);
     const handleExpand = (section: SectionKey) => {
       setExpanded(prev => ({
         ...prev,
@@ -39,7 +40,7 @@ export const ReviewAndDeploy = () => {
         <div className="bg-white rounded-xl border border-gray-200 p-4 w-full">
             <div
                 className="flex items-start justify-between cursor-pointer"
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={() => onHeaderClick(stepKey)}
             >
                 <div className="flex flex-col">
                     <div className={`${isExpanded ? 'text-black text-base font-semibold' : 'text-sm text-gray-500'}`}>Review & Deploy</div>
@@ -55,8 +56,7 @@ export const ReviewAndDeploy = () => {
                 <ChevronDown className="w-5 h-5 text-gray-500" />
                 )}
             </div>
-            {
-                isExpanded && (
+            {isExpanded && (
                     <div className='space-y-2 mt-6'>
                         <div className="border rounded-lg">
                             <SectionHeader title="Token Details" sectionKey="tokenDetails" expanded={expanded.tokenDetails} onClick={handleExpand} />
@@ -206,19 +206,18 @@ export const ReviewAndDeploy = () => {
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500">Fundraising Target</label>
-                                        <div className="font-medium text-sm">{state.saleSetup.softCap} - {state.saleSetup.hardCap} SOL</div>
+                                        <div className="font-medium text-sm">{state.saleSetup.softCap && state.saleSetup.hardCap ? `${state.saleSetup.softCap} - ${state.saleSetup.hardCap} SOL` : 'No Funding Target'}</div>
                                     </div>
                                     <div>
                                         <label className="text-xs text-gray-500">Contribution Limits</label>
-                                        <div className="font-medium text-sm">{state.saleSetup.minimumContribution} - {state.saleSetup.maximumContribution} SOL</div>
+                                        <div className="font-medium text-sm">{state.saleSetup.minimumContribution && state.saleSetup.maximumContribution ? `${state.saleSetup.minimumContribution} - ${state.saleSetup.maximumContribution} SOL` : 'No limits'}</div>
                                     </div>
                                 </div>
                                 )}
                             </div>
                         )}
                     </div>
-                )
-            }
+                )}
         </div>
     );
 }

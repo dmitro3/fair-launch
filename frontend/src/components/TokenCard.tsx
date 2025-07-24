@@ -4,6 +4,22 @@ import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { ExternalLink } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { SOL_NETWORK } from "../configs/env.config";
+import { formatNumberWithCommas } from "../utils";
+import { useEffect, useState } from "react";
+import { getBondingCurveAccounts } from "../utils/tokenUtils";
+import { PublicKey } from "@solana/web3.js";
+
+
+interface BondingCurve {
+    creator: string;
+    totalSupply: number;
+    reserveBalance: number;
+    reserveToken: number;
+    token: string;
+    reserveRatio: number;
+    bump: number;
+} 
 
 interface TokenCardProps {
     banner?: string;
@@ -20,6 +36,7 @@ interface TokenCardProps {
     price?: string;
     externalLabel: string;
     value: string;
+    decimals: number;
 }
 
 export function TokenCard({
@@ -37,8 +54,27 @@ export function TokenCard({
     price,
     externalLabel,
     value,
+    decimals,
 }: TokenCardProps) {
     const navigate = useNavigate();
+    const [bondingCurve, setBondingCurve] = useState<BondingCurve|null>(null);
+    useEffect(()=>{
+        const fetchBondingCurveAccounts = async () => {
+            if(!address) return;
+            const bondingCurveAccounts = await getBondingCurveAccounts(new PublicKey(address));
+            setBondingCurve(bondingCurveAccounts || null);
+        }
+        fetchBondingCurveAccounts();
+    },[address])
+
+    // Calculate progress: if bondingCurve exists, use totalSupply/supply
+    let progressValue = progress;
+    const supplyNumber = Number(supply);
+    if (bondingCurve && supplyNumber > 0) {
+        progressValue = (Number(bondingCurve.totalSupply) / (supplyNumber * 10 ** decimals)) * 100;
+    }
+
+
     return (
         <Card
             onClick={() => navigate({ to: `/token/${value}` })}
@@ -64,13 +100,17 @@ export function TokenCard({
                 <p className="text-sm text-gray-500 mb-3 line-clamp-2 min-h-[40px]">{description}</p>
                 <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
                     <span>Progress</span>
-                    <span>{supply}/1,000,000</span>
+                    {
+                        bondingCurve && (
+                            <span>{formatNumberWithCommas(bondingCurve.totalSupply / 10 ** decimals)} / {formatNumberWithCommas(supplyNumber)}</span>
+                        )
+                    }
                 </div>
-                <Progress value={progress} className="h-4 bg-gray-200 mb-4" />
+                <Progress value={progressValue} bgProgress="bg-black" className="h-4 bg-gray-200 mb-4" />
                 <div className="grid grid-cols-2 gap-2 text-xs mb-1">
                     <div>
                         <div className="text-gray-400">Token Address</div>
-                        <a href={`https://solscan.io/token/${address}?cluster=${process.env.PUBLIC_SOL_NETWORK}`} target="_blank" className="font-medium text-gray-800 truncate hover:underline">
+                        <a href={`https://solscan.io/token/${address}?cluster=${SOL_NETWORK}`} target="_blank" className="font-medium text-gray-800 truncate hover:underline">
                             {address.slice(0, 6)}...{address.slice(-6)}
                         </a>
                     </div>
@@ -94,13 +134,13 @@ export function TokenCard({
                         e.stopPropagation();
                         navigate({ to: `/token/${value}` })
                     }} variant="outline" className="flex-1 rounded-md text-sm border-gray-300 py-2">View Details</Button>
-                    <Button onClick={(e) => {
+                    {/* <Button onClick={(e) => {
                         e.stopPropagation();
                         
                     }} variant="secondary" className="flex-1 flex items-center text-sm gap-2 rounded-md bg-gray-900 hover:bg-gray-800 text-white py-2">
                         <ExternalLink className="w-4 h-4" />
                         View on {externalLabel}
-                    </Button>
+                    </Button> */}
                 </div>
             </CardContent>
         </Card>

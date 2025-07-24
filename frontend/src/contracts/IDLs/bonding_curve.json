@@ -1,5 +1,5 @@
 {
-  "address": "2133PDFLFMiJyzqKU55up2wThH68QjVFjtrtC5Mx91TY",
+  "address": "CB18NKSvKunD2xeuvEkKfBxuz4fJFJJ8GPy5w1dMzN1",
   "metadata": {
     "name": "bonding_curve",
     "version": "0.1.0",
@@ -90,8 +90,7 @@
               },
               {
                 "kind": "account",
-                "path": "bonding_curve_configuration.global_admin",
-                "account": "CurveConfiguration"
+                "path": "token_mint"
               }
             ]
           }
@@ -322,31 +321,6 @@
       ],
       "accounts": [
         {
-          "name": "launch_pad_account",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
           "name": "whitelist_data",
           "writable": true,
           "pda": {
@@ -372,7 +346,8 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "whitelist_data.token_mint",
+                "account": "WhitelistLaunchData"
               }
             ]
           }
@@ -399,7 +374,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "whitelist_data"
               },
               {
                 "kind": "account",
@@ -467,8 +442,7 @@
               },
               {
                 "kind": "account",
-                "path": "bonding_curve_configuration.global_admin",
-                "account": "CurveConfiguration"
+                "path": "token_mint"
               }
             ]
           }
@@ -750,6 +724,10 @@
               {
                 "kind": "account",
                 "path": "wallet"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
               }
             ]
           }
@@ -807,32 +785,6 @@
       ],
       "accounts": [
         {
-          "name": "launch_pad_account",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "launch_pad_account.authority",
-                "account": "LaunchPadAccount"
-              }
-            ]
-          }
-        },
-        {
           "name": "fair_launch_data",
           "writable": true,
           "pda": {
@@ -860,7 +812,8 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data.token_mint",
+                "account": "FairLaunchData"
               }
             ]
           }
@@ -882,7 +835,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data"
               },
               {
                 "kind": "account",
@@ -920,7 +873,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data"
               }
             ]
           }
@@ -978,6 +931,10 @@
               {
                 "kind": "account",
                 "path": "wallet"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
               }
             ]
           }
@@ -1068,10 +1025,6 @@
       ],
       "args": [
         {
-          "name": "category",
-          "type": "string"
-        },
-        {
           "name": "percentage",
           "type": "u8"
         },
@@ -1105,32 +1058,6 @@
       ],
       "accounts": [
         {
-          "name": "launch_pad_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
           "name": "fair_launch_data",
           "writable": true,
           "pda": {
@@ -1158,7 +1085,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "token_mint"
               }
             ]
           }
@@ -1173,7 +1100,7 @@
             "seeds": [
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data"
               },
               {
                 "kind": "account",
@@ -1252,7 +1179,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data"
               }
             ]
           }
@@ -1357,8 +1284,7 @@
               },
               {
                 "kind": "account",
-                "path": "bonding_curve_configuration.global_admin",
-                "account": "CurveConfiguration"
+                "path": "token_mint"
               }
             ]
           }
@@ -1496,7 +1422,7 @@
             "seeds": [
               {
                 "kind": "account",
-                "path": "user"
+                "path": "admin"
               },
               {
                 "kind": "account",
@@ -1547,7 +1473,7 @@
           }
         },
         {
-          "name": "user",
+          "name": "admin",
           "writable": true,
           "signer": true
         },
@@ -1567,7 +1493,70 @@
           "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "admin",
+          "type": "pubkey"
+        },
+        {
+          "name": "fee_percentage",
+          "type": "u16"
+        },
+        {
+          "name": "initial_quorum",
+          "type": "u64"
+        },
+        {
+          "name": "target_liquidity",
+          "type": "u64"
+        },
+        {
+          "name": "governance",
+          "type": "pubkey"
+        },
+        {
+          "name": "dao_quorum",
+          "type": "u16"
+        },
+        {
+          "name": "bonding_curve_type",
+          "type": "u8"
+        },
+        {
+          "name": "max_token_supply",
+          "type": "u64"
+        },
+        {
+          "name": "liquidity_lock_period",
+          "type": "i64"
+        },
+        {
+          "name": "liquidity_pool_percentage",
+          "type": "u16"
+        },
+        {
+          "name": "initial_reserve",
+          "type": "u64"
+        },
+        {
+          "name": "initial_supply",
+          "type": "u64"
+        },
+        {
+          "name": "recipients",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "Recipient"
+              }
+            }
+          }
+        },
+        {
+          "name": "reserve_ratio",
+          "type": "u16"
+        }
+      ]
     },
     {
       "name": "create_whitelist_launch",
@@ -1582,32 +1571,6 @@
         226
       ],
       "accounts": [
-        {
-          "name": "launch_pad_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
         {
           "name": "whitelist_data",
           "writable": true,
@@ -1634,7 +1597,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "token_mint"
               }
             ]
           }
@@ -1649,7 +1612,7 @@
             "seeds": [
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "whitelist_data"
               },
               {
                 "kind": "account",
@@ -1748,6 +1711,144 @@
       ]
     },
     {
+      "name": "delete_allocation",
+      "discriminator": [
+        143,
+        77,
+        65,
+        41,
+        35,
+        39,
+        85,
+        53
+      ],
+      "accounts": [
+        {
+          "name": "allocation",
+          "writable": true
+        },
+        {
+          "name": "receiver",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_bonding_curve",
+      "discriminator": [
+        75,
+        208,
+        2,
+        145,
+        181,
+        203,
+        75,
+        183
+      ],
+      "accounts": [
+        {
+          "name": "bonding_curve",
+          "writable": true
+        },
+        {
+          "name": "receiver",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_curve_configuration",
+      "discriminator": [
+        246,
+        124,
+        89,
+        208,
+        153,
+        127,
+        190,
+        17
+      ],
+      "accounts": [
+        {
+          "name": "curve_configuration",
+          "writable": true
+        },
+        {
+          "name": "receiver",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_fair_launch_data",
+      "discriminator": [
+        148,
+        155,
+        118,
+        49,
+        220,
+        230,
+        91,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "fair_launch_data",
+          "writable": true
+        },
+        {
+          "name": "receiver",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_vault",
+      "discriminator": [
+        99,
+        171,
+        186,
+        178,
+        201,
+        17,
+        81,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "vault_authority"
+        },
+        {
+          "name": "receiver",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "vault_seeds",
+          "type": {
+            "vec": "bytes"
+          }
+        }
+      ]
+    },
+    {
       "name": "distribute_tokens",
       "discriminator": [
         105,
@@ -1760,32 +1861,6 @@
         120
       ],
       "accounts": [
-        {
-          "name": "launch_pad_account",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "launch_pad_account.authority",
-                "account": "LaunchPadAccount"
-              }
-            ]
-          }
-        },
         {
           "name": "fair_launch_data",
           "pda": {
@@ -1813,7 +1888,8 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data.token_mint",
+                "account": "FairLaunchData"
               }
             ]
           }
@@ -1835,7 +1911,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data"
               },
               {
                 "kind": "account",
@@ -1865,134 +1941,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "initialize",
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
-      "accounts": [
-        {
-          "name": "bonding_curve_configuration",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  117,
-                  114,
-                  118,
-                  101,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103,
-                  117,
-                  114,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "admin"
-              }
-            ]
-          }
-        },
-        {
-          "name": "admin",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "rent",
-          "address": "SysvarRent111111111111111111111111111111111"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "admin",
-          "type": "pubkey"
-        },
-        {
-          "name": "fee_percentage",
-          "type": "u16"
-        },
-        {
-          "name": "initial_quorum",
-          "type": "u64"
-        },
-        {
-          "name": "target_liquidity",
-          "type": "u64"
-        },
-        {
-          "name": "governance",
-          "type": "pubkey"
-        },
-        {
-          "name": "dao_quorum",
-          "type": "u16"
-        },
-        {
-          "name": "bonding_curve_type",
-          "type": "u8"
-        },
-        {
-          "name": "max_token_supply",
-          "type": "u64"
-        },
-        {
-          "name": "liquidity_lock_period",
-          "type": "i64"
-        },
-        {
-          "name": "liquidity_pool_percentage",
-          "type": "u16"
-        },
-        {
-          "name": "initial_reserve",
-          "type": "u64"
-        },
-        {
-          "name": "initial_supply",
-          "type": "u64"
-        },
-        {
-          "name": "recipients",
-          "type": {
-            "vec": {
-              "defined": {
-                "name": "Recipient"
-              }
-            }
-          }
-        },
-        {
-          "name": "reserve_ratio",
-          "type": "u16"
-        }
-      ]
     },
     {
       "name": "migrate_meteora_pool",
@@ -2536,31 +2484,6 @@
       ],
       "accounts": [
         {
-          "name": "launch_pad_account",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
           "name": "whitelist_data",
           "writable": true,
           "optional": true
@@ -2592,33 +2515,6 @@
       ],
       "accounts": [
         {
-          "name": "launch_pad_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "launch_pad_account.authority",
-                "account": "LaunchPadAccount"
-              }
-            ]
-          }
-        },
-        {
           "name": "fair_launch_data",
           "writable": true,
           "pda": {
@@ -2646,7 +2542,8 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data.token_mint",
+                "account": "FairLaunchData"
               }
             ]
           }
@@ -2668,7 +2565,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data"
               },
               {
                 "kind": "account",
@@ -2706,7 +2603,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "fair_launch_data"
               }
             ]
           }
@@ -2767,8 +2664,7 @@
               },
               {
                 "kind": "account",
-                "path": "bonding_curve_configuration.global_admin",
-                "account": "CurveConfiguration"
+                "path": "token_mint"
               }
             ]
           }
@@ -2995,31 +2891,6 @@
       ],
       "accounts": [
         {
-          "name": "launch_pad_account",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
           "name": "whitelist_data",
           "writable": true,
           "pda": {
@@ -3045,7 +2916,8 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "whitelist_data.token_mint",
+                "account": "WhitelistLaunchData"
               }
             ]
           }
@@ -3072,7 +2944,7 @@
               },
               {
                 "kind": "account",
-                "path": "launch_pad_account"
+                "path": "whitelist_data"
               },
               {
                 "kind": "account",
@@ -3140,8 +3012,7 @@
               },
               {
                 "kind": "account",
-                "path": "bonding_curve_configuration.global_admin",
-                "account": "CurveConfiguration"
+                "path": "token_mint"
               }
             ]
           }
@@ -3372,31 +3243,6 @@
       ],
       "accounts": [
         {
-          "name": "launch_pad_account",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  108,
-                  97,
-                  117,
-                  110,
-                  99,
-                  104,
-                  112,
-                  97,
-                  100
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
-        },
-        {
           "name": "whitelist_data",
           "writable": true,
           "optional": true
@@ -3479,19 +3325,6 @@
         58,
         87,
         78
-      ]
-    },
-    {
-      "name": "LaunchPadAccount",
-      "discriminator": [
-        91,
-        200,
-        145,
-        43,
-        234,
-        176,
-        211,
-        195
       ]
     },
     {
@@ -3613,6 +3446,11 @@
       "code": 6020,
       "name": "TransferFailed",
       "msg": "Transfer failed"
+    },
+    {
+      "code": 6021,
+      "name": "NotEnoughSolInVaultRentExempt",
+      "msg": "Not enough SOL in vault for rent-exempt"
     }
   ],
   "types": [
@@ -3621,10 +3459,6 @@
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "category",
-            "type": "string"
-          },
           {
             "name": "wallet",
             "type": "pubkey"
@@ -3804,7 +3638,7 @@
             "type": "u16"
           },
           {
-            "name": "initial_reserve",
+            "name": "initial_price",
             "type": "u64"
           },
           {
@@ -3838,8 +3672,20 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "launchpad",
+            "name": "authority",
             "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "end_time",
+            "type": "i64"
           },
           {
             "name": "vault",
@@ -3880,72 +3726,6 @@
           {
             "name": "bump",
             "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LaunchPadAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "authority",
-            "type": "pubkey"
-          },
-          {
-            "name": "token_mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "start_time",
-            "type": "i64"
-          },
-          {
-            "name": "end_time",
-            "type": "i64"
-          },
-          {
-            "name": "vault",
-            "type": "pubkey"
-          },
-          {
-            "name": "launch_type",
-            "type": {
-              "defined": {
-                "name": "LaunchType"
-              }
-            }
-          },
-          {
-            "name": "whitelist_data",
-            "type": {
-              "option": "pubkey"
-            }
-          },
-          {
-            "name": "fair_launch_data",
-            "type": {
-              "option": "pubkey"
-            }
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LaunchType",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Whitelist"
-          },
-          {
-            "name": "FairLaunch"
           }
         ]
       }
@@ -4008,8 +3788,20 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "launchpad",
+            "name": "authority",
             "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "start_time",
+            "type": "i64"
+          },
+          {
+            "name": "end_time",
+            "type": "i64"
           },
           {
             "name": "token_price",

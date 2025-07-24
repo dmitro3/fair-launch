@@ -1,14 +1,14 @@
 import { useState, useRef } from 'react';
-import { ChevronDown, ChevronUp, Loader2, CircleCheck } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
+import type { StepProps } from '../../../types';
+import { ChevronDown, ChevronUp, Loader2, CircleCheck, Lightbulb } from 'lucide-react';
 import { Input } from '../../ui/input';
 import { Textarea } from '../../ui/textarea';
 import { useDeployStore } from '../../../stores/deployStores';
 import { toast } from 'react-hot-toast';
 
-export const BasicInformation = () => {
-    const [isExpanded, setIsExpanded] = useState<boolean>(true);
-    const [isUploading, setIsUploading] = useState<boolean>(false);
+export const BasicInformation = ({ isExpanded, stepKey, onHeaderClick }: StepProps) => {
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState<boolean>(false);
+    const [isUploadingBanner, setIsUploadingBanner] = useState<boolean>(false);
     const { basicInfo, updateBasicInfo, validationErrors, validateBasicInfo } = useDeployStore();
     const { name, symbol, description, supply, decimals, avatarUrl, bannerUrl } = basicInfo;
     const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -22,12 +22,41 @@ export const BasicInformation = () => {
         validateBasicInfo();
     };
 
-    const uploadToPinata = async (file: File): Promise<string | null> => {
+    // Recommendation logic
+    const getRecommendations = () => {
+        const recommendations: { [key: string]: string } = {};
+
+        // Decimals recommendation
+        if (!decimals || decimals === '') {
+            recommendations.decimals = 'Recommended: 6 decimals for most tokens';
+        } else if (Number(decimals) !== 6) {
+            recommendations.decimals = 'Most tokens use 6 decimals for optimal compatibility';
+        }
+
+        // Total supply recommendation
+        if (!supply || supply === '') {
+            recommendations.supply = 'Recommended: 10,000,000 tokens for fair distribution';
+        } else if (Number(supply) !== 10000000) {
+            const currentSupply = Number(supply);
+            if (currentSupply < 1000000) {
+                recommendations.supply = 'Consider a larger supply (10M+) for better liquidity';
+            } else if (currentSupply > 100000000) {
+                recommendations.supply = 'Large supply may affect token price perception';
+            }
+        }
+
+        return recommendations;
+    };
+
+    const recommendations = getRecommendations();
+
+    const uploadToPinata = async (file: File, type: 'avatar' | 'banner'): Promise<string | null> => {
         const formData = new FormData();
         formData.append('file', file);
 
         try {
-            setIsUploading(true);
+            if (type === 'avatar') setIsUploadingAvatar(true);
+            else setIsUploadingBanner(true);
             const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
                 method: 'POST',
                 headers: {
@@ -54,14 +83,15 @@ export const BasicInformation = () => {
             toast.error('Failed to upload file');
             return null;
         } finally {
-            setIsUploading(false);
+            if (type === 'avatar') setIsUploadingAvatar(false);
+            else setIsUploadingBanner(false);
         }
     };
 
     const handleImageUpload = async (type: 'avatar' | 'banner', file: File) => {
         if (file) {
             try {
-                const pinataRes = await uploadToPinata(file);
+                const pinataRes = await uploadToPinata(file, type);
                 
                 if (pinataRes) {
                     if (type === 'avatar') {
@@ -116,84 +146,96 @@ export const BasicInformation = () => {
         return !hasErrors && hasRequiredFields && hasImages;
     };
 
-    const avatarDisplay = avatarUrl || avatarPreview;
-    const bannerDisplay = bannerUrl || bannerPreview;
+    const avatarDisplay = avatarUrl || avatarPreview || undefined;
+    const bannerDisplay = bannerUrl || bannerPreview || undefined;
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 p-4 w-full">
-            <div>
-                <div 
-                    className="flex items-center justify-between cursor-pointer"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                >
-                    <div className={`${isExpanded ? 'text-black text-base font-semibold' : 'text-sm text-gray-500'}`}>Basic Information</div>
-                    {isFormValid() ? (
-                        <CircleCheck className="w-5 h-5 text-green-500" />
-                    ) : isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-500" />
-                    ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-500" />
-                    )}
-                </div>
-                {isExpanded && (
-                    <>
-                        <div className="text-xs text-gray-500 mb-4">Token Name, Symbol & Supply</div>
-                        <div className="space-y-4">
-                            <div>
-                                <div className="text-sm font-medium mb-1">Token Name</div>
-                                <Input 
-                                    placeholder="Token Name" 
-                                    value={name}
-                                    onChange={(e) => handleInputChange('name', e.target.value)}
-                                />
-                                {validationErrors.name && <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>}
-                            </div>
-                            <div>
-                                <div className="text-sm font-medium mb-1">Token Symbol</div>
-                                <Input 
-                                    placeholder="Token Symbol" 
-                                    value={symbol}
-                                    onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
-                                />
-                                {validationErrors.symbol && <p className="text-red-500 text-xs mt-1">{validationErrors.symbol}</p>}
-                            </div>
-                            <div>
-                                <div className="text-sm font-medium mb-1">Total Supply</div>
-                                <Input 
-                                    placeholder="Total Supply" 
-                                    type="number"
-                                    value={supply}
-                                    onChange={(e) => handleInputChange('supply', e.target.value)}
-                                />
-                                {validationErrors.supply && <p className="text-red-500 text-xs mt-1">{validationErrors.supply}</p>}
-                            </div>
-                            <div>
-                                <div className="text-sm font-medium mb-1">Decimal</div>
-                                <Input 
-                                    placeholder="Decimal" 
-                                    type="number"
-                                    value={decimals}
-                                    onChange={(e) => handleInputChange('decimals', e.target.value)}
-                                />
-                                {validationErrors.decimals && <p className="text-red-500 text-xs mt-1">{validationErrors.decimals}</p>}
-                            </div>
-                            <div>
-                                <Textarea 
-                                    rows={3} 
-                                    placeholder="Describe your token's purpose"
-                                    value={description}
-                                    onChange={(e) => handleInputChange('description', e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    </>
+            <div 
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => onHeaderClick(stepKey)}
+            >
+                <div className={`${isExpanded ? 'text-black text-base font-semibold' : 'text-sm text-gray-500'}`}>Basic Information</div>
+                {isFormValid() ? (
+                    <CircleCheck className="w-5 h-5 text-green-500" />
+                ) : isExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-500" />
+                ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-500" />
                 )}
             </div>
-
-            {
-                isExpanded && (
+            {isExpanded && (
+                <>
+                    <div className="text-xs text-gray-500 mb-4">Token Name, Symbol & Supply</div>
+                    <div className="space-y-4">
+                        <div>
+                            <div className="text-sm font-medium mb-1">Token Name <span className="text-red-500">*</span></div>
+                            <Input 
+                                placeholder="POTLAUNCH" 
+                                value={name}
+                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                className={validationErrors.name ? "border-red-500 focus:border-red-500" : ""}
+                            />
+                            {validationErrors.name && <p className="text-red-500 text-xs mt-1">{validationErrors.name}</p>}
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium mb-1">Token Symbol <span className="text-red-500">*</span></div>
+                            <Input 
+                                placeholder="PTL" 
+                                value={symbol}
+                                onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
+                                className={validationErrors.symbol ? "border-red-500 focus:border-red-500" : ""}
+                            />
+                            {validationErrors.symbol && <p className="text-red-500 text-xs mt-1">{validationErrors.symbol}</p>}
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium mb-1">Total Supply <span className="text-red-500">*</span></div>
+                            <Input 
+                                placeholder="10000000" 
+                                type="number"
+                                value={supply}
+                                onChange={(e) => handleInputChange('supply', e.target.value)}
+                                className={validationErrors.supply ? "border-red-500 focus:border-red-500" : ""}
+                            />
+                            {validationErrors.supply && <p className="text-red-500 text-xs mt-1">{validationErrors.supply}</p>}
+                            {recommendations.supply && (
+                                <div className="flex items-center gap-1 mt-1">
+                                    <Lightbulb className="w-3 h-3 text-yellow-500" />
+                                    <p className="text-yellow-600 text-xs">{recommendations.supply}</p>
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <div className="text-sm font-medium mb-1">Decimal <span className="text-red-500">*</span></div>
+                            <Input 
+                                placeholder="6" 
+                                type="number"
+                                value={decimals}
+                                onChange={(e) => handleInputChange('decimals', e.target.value)}
+                                className={validationErrors.decimals ? "border-red-500 focus:border-red-500" : ""}
+                            />
+                            {validationErrors.decimals && <p className="text-red-500 text-xs mt-1">{validationErrors.decimals}</p>}
+                            {recommendations.decimals && (
+                                <div className="flex items-center gap-1 mt-1">
+                                    <Lightbulb className="w-3 h-3 text-yellow-500" />
+                                    <p className="text-yellow-600 text-xs">{recommendations.decimals}</p>
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <Textarea 
+                                rows={3} 
+                                placeholder="Description goes here"
+                                value={description}
+                                onChange={(e) => handleInputChange('description', e.target.value)}
+                            />
+                        </div>
+                    </div>
                     <div className="mb-6 space-y-2">
-                        <div className="text-sm font-semibold mt-3">Token Branding</div>
+                        <div className="text-sm font-semibold mt-3 flex flex-row gap-1">
+                            <span>Token Branding</span>
+                            <span className='text-red-500'>*</span>
+                        </div>
                         <div className="flex gap-4 mb-2 flex-col md:flex-row">
                             <div className='flex flex-col gap-1'>
                                 <input
@@ -204,12 +246,16 @@ export const BasicInformation = () => {
                                     onChange={(e) => e.target.files?.[0] && handleImageUpload('avatar', e.target.files[0])}
                                 />
                                 <div 
-                                    className="flex-1 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center p-6 min-h-[160px] cursor-pointer hover:border-gray-300 transition-colors relative"
+                                    className={`flex-1 border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-6 min-h-[160px] cursor-pointer transition-colors relative ${
+                                        validationErrors.avatarUrl 
+                                            ? 'border-red-500 hover:border-red-600' 
+                                            : 'border-gray-200 hover:border-gray-300'
+                                    }`}
                                     onClick={() => handleImageClick('avatar')}
                                     onDrop={(e) => handleImageDrop('avatar', e)}
                                     onDragOver={handleDragOver}
                                 >
-                                    {isUploading && (
+                                    {isUploadingAvatar && (
                                         <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
                                             <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
                                         </div>
@@ -235,18 +281,6 @@ export const BasicInformation = () => {
                                 {validationErrors.avatarUrl && (
                                     <p className="text-red-500 text-xs mt-1">{validationErrors.avatarUrl}</p>
                                 )}
-                                <Tabs defaultValue="upload" className="w-full">
-                                    <TabsList className="w-full">
-                                        <TabsTrigger value="upload" className="flex-1 data-[state=active]:bg-white">Upload</TabsTrigger>
-                                        <TabsTrigger value="ai" className="flex-1 data-[state=active]:bg-white opacity-50 cursor-not-allowed" disabled>AI Generate</TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="upload" className="mt-2">
-                                        <div className="text-sm text-gray-500">Upload your token logo</div>
-                                    </TabsContent>
-                                    <TabsContent value="ai" className="mt-2">
-                                        <div className="text-sm text-gray-500">Generate token logo using AI (Coming Soon)</div>
-                                    </TabsContent>
-                                </Tabs>
                             </div>
                             <input
                                 type="file"
@@ -256,12 +290,16 @@ export const BasicInformation = () => {
                                 onChange={(e) => e.target.files?.[0] && handleImageUpload('banner', e.target.files[0])}
                             />
                             <div 
-                                className="flex-1 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center p-6 min-h-[160px] cursor-pointer hover:border-gray-300 transition-colors relative"
+                                className={`flex-1 border-2 border-dashed rounded-lg flex flex-col items-center justify-center p-6 min-h-[160px] cursor-pointer transition-colors relative ${
+                                    validationErrors.bannerUrl 
+                                        ? 'border-red-500 hover:border-red-600' 
+                                        : 'border-gray-200 hover:border-gray-300'
+                                }`}
                                 onClick={() => handleImageClick('banner')}
                                 onDrop={(e) => handleImageDrop('banner', e)}
                                 onDragOver={handleDragOver}
                             >
-                                {isUploading && (
+                                {isUploadingBanner && (
                                     <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
                                         <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
                                     </div>
@@ -289,8 +327,8 @@ export const BasicInformation = () => {
                             )}
                         </div>
                     </div>
-                )
-            }
+                </>
+            )}
         </div>
-    )
+    );
 }

@@ -283,3 +283,14 @@ export interface Metadata {
         farcaster?: string;
     }
 }
+
+export interface Holders {
+    amount: number,
+    owner: string
+}
+
+export interface StepProps {
+    isExpanded: boolean;
+    stepKey: string;
+    onHeaderClick: (stepKey: string) => void;
+}
