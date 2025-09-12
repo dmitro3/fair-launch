@@ -68,6 +68,29 @@ app.get('/mint/:address', async (c) => {
     
     const token = await tokenService.getTokenByAddress(address);
     
+    if (token) {
+      const {
+        website,
+        twitter,
+        telegram,
+        discord,
+        farcaster,
+        ...rest
+      } = token;
+      return c.json({
+        success: true,
+        data: {
+          ...rest,
+          social: {
+            website,
+            twitter,
+            telegram,
+            discord,
+            farcaster,
+          },
+        },
+      });
+    }
     return c.json({
       success: true,
       data: token
@@ -82,6 +105,34 @@ app.get('/mint/:address', async (c) => {
       }, 404);
     }
     
+    return c.json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Internal server error'
+    }, 500);
+  }
+});
+
+// Search tokens
+app.get('/search', async (c) => {
+  try {
+    const query = c.req.query('q');
+    const owner = c.req.query('owner');
+    
+    if (!query || query.trim() === '') {
+      return c.json({
+        success: false,
+        message: 'Search query is required'
+      }, 400);
+    }
+    
+    const tokens = await tokenService.searchTokens(query.trim(), owner);
+    
+    return c.json({
+      success: true,
+      data: tokens
+    });
+  } catch (error) {
+    console.error('Error in search tokens route:', error);
     return c.json({
       success: false,
       message: error instanceof Error ? error.message : 'Internal server error'

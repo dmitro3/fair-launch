@@ -1,32 +1,15 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { IconChevronDown } from '@tabler/icons-react';
 import { WalletButton } from '../WalletButton';
 import { PlusIcon } from 'lucide-react';
 
-interface NetworkOption {
-    id: string;
-    name: string;
-    icon: string;
-}
-
 
 export default function Header() {
-    const [selectedNetwork, setSelectedNetwork] = useState('Solana');
-    const [isNetworkDropdownOpen, setIsNetworkDropdownOpen] = useState(false);
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-
-    const networks: NetworkOption[] = [
-        { id: 'solana', name: 'Solana', icon: '/chains/solana.svg' }
-    ];
-
-    const selectedNetworkData = networks.find(n => n.name === selectedNetwork) || networks[0];
-
+    const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     return (
         <header className="border-b border-gray-200 bg-white">
             <div className="xl:container mx-auto px-4 h-16 flex items-center justify-between">
                 <div className="flex items-center">
-                    {/* Logo for both mobile and desktop */}
                     <Link to="/" className="flex items-center">
                         <img src="/logo.png" alt="Logo" className="w-10 h-10" />
                         <span className="text-2xl font-semibold md:block hidden ml-2">POTLAUNCH</span>
@@ -34,53 +17,26 @@ export default function Header() {
                 </div>
                 <div className="flex items-center">
                     <nav className="hidden lg:flex items-center space-x-8 mr-10">
+                        <Link to="/tokens" className="text-gray-600 hover:text-gray-900">
+                            <span className='text-sm'>Launchpad</span>
+                        </Link>
                         <Link to="/create" className="text-gray-600 hover:text-gray-900">
                             <span className='text-sm'>Create Token</span>
                         </Link>
-                        <Link to="/" className="text-gray-600 hover:text-gray-900">
-                            <span className='text-sm'>Launchpad</span>
+                        <Link to="/bridge" className="text-gray-600 hover:text-gray-900">
+                            <span className='text-sm'>Bridge Tokens</span>
                         </Link>
                         <Link to="/my-tokens" className="text-gray-600 hover:text-gray-900">
-                            <span className='text-sm'>My tokens</span>
+                            <span className='text-sm'>My Tokens</span>
                         </Link>
                     </nav>
 
                     <div className="hidden md:flex items-center space-x-4">
-                        <div className="relative">
-                            <button 
-                                className="flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50"
-                                onClick={() => setIsNetworkDropdownOpen(!isNetworkDropdownOpen)}
-                            >
-                                <img src={selectedNetworkData.icon} alt={selectedNetworkData.name} className='w-4 h-4' />
-                                <span className='text-sm'>{selectedNetworkData.name}</span>
-                                <IconChevronDown className={`w-4 h-4 transition-transform duration-200 ${isNetworkDropdownOpen ? 'transform rotate-180' : ''}`} />
-                            </button>
-                            
-                            {isNetworkDropdownOpen && (
-                                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
-                                    {networks.map((network) => (
-                                        <button
-                                            key={network.id}
-                                            className={`w-full flex items-center justify-start space-x-2 px-3 py-2 hover:bg-gray-50 ${
-                                                network.name === selectedNetwork ? 'bg-gray-50' : ''
-                                            }`}
-                                            onClick={() => {
-                                                setSelectedNetwork(network.name);
-                                                setIsNetworkDropdownOpen(false);
-                                            }}
-                                        >
-                                            <img src={network.icon} alt={network.name} className='w-4 h-4' />
-                                            <span className="text-sm">{network.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                         <WalletButton />
                     </div>
                     
                     <div className='flex flex-row items-center space-x-4'>
-                        <a href='/create' className='flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-200 bg-black text-white hover:bg-gray-700 hover:text-black transition-all duration-300 md:hidden'>
+                        <a href='/create' className='flex items-center space-x-2 px-3 py-2 rounded-lg border border-gray-200 bg-[#DD3345] text-white hover:bg-[#DD3345]/85 hover:text-white transition-all duration-300 md:hidden'>
                             <PlusIcon className='w-4 h-4' />
                             <span className='text-sm'>Create</span>
                         </a>
@@ -111,11 +67,17 @@ export default function Header() {
                             <span className="text-2xl font-semibold">POTLAUNCH</span>
                         </div>
                         <nav className="flex flex-col space-y-4 mb-8">
-                            <Link to="/create" className="text-gray-600 hover:text-gray-900 text-lg" onClick={() => setSidebarOpen(false)}>
-                                Token Creator
-                            </Link>
-                            <Link to="/" className="text-gray-600 hover:text-gray-900 text-lg" onClick={() => setSidebarOpen(false)}>
+                            <Link to="/tokens" className="text-gray-600 hover:text-gray-900 text-lg" onClick={() => setSidebarOpen(false)}>
                                 Launchpad
+                            </Link>
+                            <Link to="/create" className="text-gray-600 hover:text-gray-900 text-lg" onClick={() => setSidebarOpen(false)}>
+                                Create Token
+                            </Link>
+                            <Link to="/bridge" className="text-gray-600 hover:text-gray-900 text-lg" onClick={() => setSidebarOpen(false)}>
+                                Bridge Tokens
+                            </Link>
+                            <Link to="/my-tokens" className="text-gray-600 hover:text-gray-900 text-lg" onClick={() => setSidebarOpen(false)}>
+                                My Tokens
                             </Link>
                         </nav>
                         <div className="mt-auto">

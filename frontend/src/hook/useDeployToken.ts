@@ -24,10 +24,11 @@ import { useCallback } from "react";
 import toast from "react-hot-toast";
 import useAnchorProvider from "./useAnchorProvider";
 import { getPDAs, getAllocationPDAs, getFairLaunchPDAs } from "../utils/sol";
-import { useDeployStore } from "../stores/deployStores";
+import { useDeployStore } from "../stores/deployStore";
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 import { Metadata } from "../types";
 import { createToken } from "../lib/api";
+import { JWT_PINATA_SECRET, PINATA_API_KEY } from "../configs/env.config";
 
 // Helper function to convert dates to Unix time
 const toUnixTime = (dateString?: string, daysToAdd: number = 0): number => {
@@ -44,7 +45,7 @@ const uploadMetadataToPinata = async (metadata: Metadata) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.PUBLIC_JWT_PINATA_SECRET}`
+        'Authorization': `Bearer ${JWT_PINATA_SECRET}`
       },
       body: JSON.stringify(metadata)
     });
@@ -54,7 +55,8 @@ const uploadMetadataToPinata = async (metadata: Metadata) => {
     }
 
     const result = await response.json();
-    return `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`;
+    
+    return `https://olive-rational-giraffe-695.mypinata.cloud/ipfs/${result.IpfsHash}?pinataGatewayToken=${PINATA_API_KEY}`;
   } catch (error) {
     console.error('Error uploading metadata to Pinata:', error);
     throw error;
@@ -472,9 +474,9 @@ export const useDeployToken = () => {
       // Simulate the transaction (dry-run)
       const simulation = await provider.connection.simulateTransaction(combinedTransaction);
 
-      console.log("✅ Simulation successful!");
-      console.log("Logs:", simulation.value.logs);
-      console.log("Units consumed:", simulation.value.unitsConsumed);
+      // console.log("✅ Simulation successful!");
+      // console.log("Logs:", simulation.value.logs);
+      // console.log("Units consumed:", simulation.value.unitsConsumed);
 
       if (simulation.value.err) {
         console.log("❌ Simulation error:", simulation.value.err);
@@ -508,9 +510,9 @@ export const useDeployToken = () => {
       combinedTransaction1.recentBlockhash = blockhash;
 
       const simulation1 = await provider.connection.simulateTransaction(combinedTransaction1);
-      console.log("✅ Simulation 1 successful!");
-      console.log("Logs 1:", simulation1.value.logs);
-      console.log("Units consumed 1:", simulation1.value.unitsConsumed);
+      // console.log("✅ Simulation 1 successful!");
+      // console.log("Logs 1:", simulation1.value.logs);
+      // console.log("Units consumed 1:", simulation1.value.unitsConsumed);
 
       if (simulation1.value.err) {
         console.log("❌ Simulation 1 error:", simulation1.value.err);
@@ -558,20 +560,17 @@ export const useDeployToken = () => {
         };
 
         await createToken(tokenData);
-        console.log("Token record created in database successfully");
+        // console.log("Token record created in database successfully");
       } catch (apiError) {
         console.error("Failed to create token record in database:", apiError);
-        // Don't throw here as the token was deployed successfully on-chain
-        // Just log the error and show a warning toast
-        toast.error("Token deployed on-chain but failed to save to database");
       }
 
       toast.success("Token deployed successfully! 🎉");
       return signature;
 
     } catch (error) {
-      console.log("❌ Error during deployment:", error);
-      toast.error(`Deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // console.log("❌ Error during deployment:", error);
+      toast.error(`${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   }, [anchorWallet, provider, basicInfo, allocation, dexListing, adminSetup, saleSetup, selectedTemplate, selectedPricing, selectedExchange, sendTransaction, publicKey]);

@@ -1,111 +1,151 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { TokenCard } from "../components/TokenCard";
-import { useEffect, useState } from "react";
-import { TokenInfo } from "../utils/tokenUtils";
+import Hero from "../components/layout/Hero";
+import CoreCapabilities from "../components/CoreCapabilities";
+import ExploreTokens from "../components/ExploreTokens";
+import Comprehensive from "../components/Comprehensive";
+import IntegratedEcosystem from "../components/IntegratedEcosystem";
+import ConsultUs from "../components/ConsultUs";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { TokenInfo } from "../utils/token";
 import { getTokens } from "../lib/api";
-import { formatDateToReadable, getTemplateDisplay } from "../utils";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useMetadata } from "../hook/useMetadata";
 
 export const Route = createFileRoute("/")({
     component: Home,
 });
 
 function Home() {
+  const rootRef = useRef<HTMLDivElement>(null);
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useMetadata({
+    title: "POTLAUNCH - Launch Tokens Across Multiple Chains",
+    description: "POTLAUNCH by POTLOCK - The premier token launch platform. Launch your project with community funding across multiple chains including Solana, NEAR, and more.",
+    imageUrl: "/og-image.png"
+  });
 
   useEffect(() => {
-    const fetchTokens = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const tokens = await getTokens();
-        setTokens(tokens.data);
-      } catch (error) {
-        console.error('Error fetching tokens:', error);
-        setError('Failed to load tokens. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTokens();
+      const fetchTokens = async () => {
+        try {
+          setLoading(true);
+          const tokens = await getTokens();
+          setTokens(tokens.data);
+        } catch (error) {
+          console.error('Error fetching tokens:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchTokens();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen py-10">
-        <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-3xl font-bold text-black mb-2">Token Launchpad</h1>
-          <p className="text-gray-500 mb-8 text-base">
-            Discover and participate in token launches. Support projects you believe in.
-          </p>
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useLayoutEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+    const ctx = gsap.context(() => {
+      gsap.from('.home-stats .stat-card', {
+        y: 24,
+        opacity: 0,
+        duration: 0.6,
+        ease: 'power3.out',
+        stagger: 0.08,
+        scrollTrigger: {
+          trigger: '.home-stats',
+          start: 'top 85%',
+          toggleActions: 'play none none reverse',
+        },
+      });
+    }, rootRef);
+    return () => ctx.revert();
+  }, []);
 
-  if (error) {
-    return (
-      <div className="min-h-screen py-10">
-        <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-3xl font-bold text-black mb-2">Token Launchpad</h1>
-          <p className="text-gray-500 mb-8 text-base">
-            Discover and participate in token launches. Support projects you believe in.
-          </p>
-          <div className="flex justify-center items-center py-20">
-            <div className="text-center">
-              <p className="text-red-500 mb-4">{error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
-                className="bg-black text-white px-4 py-2 rounded-md hover:bg-opacity-80 transition-colors"
-              >
-                Try Again
-              </button>
+  return (
+    <div className="min-h-screen py-10" ref={rootRef}>
+      <Hero/>
+      <section className="w-full bg-neutral-100 h-28 flex items-center justify-center home-partners overflow-hidden">
+        <div className="w-full lg:container px-6 lg:px-28 mx-auto">
+          <div className="marquee2">
+            <div className="marquee2__track">
+              <div className="flex gap-1 items-center flex-shrink-0">
+                <img src="/logos/near-intents.svg" alt="near-intents" className="w-28 h-auto" />
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0">
+                <img src="/logos/aerodrome.png" alt="Aerodrome" className="w-8 h-auto" />
+                <span className="text-lg font-bold">AERODROME</span>
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0">
+                <img src="/logos/raydium-text.svg" alt="Raydium" className="w-36 h-auto" />
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0">
+                <img src="/logos/pumpfun.png" alt="PumpSwap" className="w-9 h-auto" />
+                <span className="font-bold">PumpSwap</span>
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0">
+                <img src="/logos/rhea.svg" alt="RHEA" className="w-[6rem] h-auto" />
+              </div>
+
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/near-intents.svg" alt="near-intents" className="w-28 h-auto" />
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/aerodrome.png" alt="Aerodrome" className="w-8 h-auto" />
+                <span className="text-lg font-bold">AERODROME</span>
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/raydium-text.svg" alt="Raydium" className="w-36 h-auto" />
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/pumpfun.png" alt="PumpSwap" className="w-9 h-auto" />
+                <span className="font-bold">PumpSwap</span>
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/rhea.svg" alt="RHEA" className="w-[6rem] h-auto" />
+              </div>
+
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/near-intents.svg" alt="near-intents" className="w-28 h-auto" />
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/aerodrome.png" alt="Aerodrome" className="w-8 h-auto" />
+                <span className="text-lg font-bold">AERODROME</span>
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/raydium-text.svg" alt="Raydium" className="w-36 h-auto" />
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/pumpfun.png" alt="PumpSwap" className="w-9 h-auto" />
+                <span className="font-bold">PumpSwap</span>
+              </div>
+              <div className="flex gap-1 items-center flex-shrink-0" aria-hidden="true">
+                <img src="/logos/rhea.svg" alt="RHEA" className="w-[6rem] h-auto" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen py-10">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-black mb-2">Token Launchpad</h1>
-        <p className="text-gray-500 mb-8 text-base">
-          Discover and participate in token launches. Support projects you believe in.
-        </p>
-        {tokens.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">No tokens found</p>
-            <p className="text-gray-400 text-sm mt-2">Tokens created through bonding curves will appear here</p>
+      </section>
+      <div className="lg:container px-4 lg:px-6 mx-auto pt-10 md:pt-20">
+        <div className="grid grid-cols-2 gap-3 md:flex items-center md:justify-between md:px-6 home-stats">
+          <div className="h-[130px] md:w-[300px] p-2 text-center md:p-6 border rounded-lg border-gray-200 flex flex-col justify-center gap-3 items-center stat-card">
+            <span className="font-bold text-4xl">10+</span>
+            <span className="font-thin text-base md:text-lg">PLANNED PROJECT LAUNCHES</span>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {tokens.map((token) => (
-              <TokenCard
-                decimals={token.decimals}
-                avatar={token.avatarUrl || "/curate.png"}
-                banner={token.bannerUrl || token.avatarUrl || "/curate.png"}
-                key={token.id}
-                type={getTemplateDisplay(token.selectedTemplate || 'meme')}
-                progress={0}
-                name={token.name}
-                symbol={token.symbol}
-                description={token.description || "No description available"}
-                supply={token.supply.toString()}
-                address={token.mintAddress || ''}
-                createdOn={formatDateToReadable(token.createdAt || '')}
-                externalLabel={token.launchLiquidityOnName || ''}
-                value={token.mintAddress || ''}
-              />
-            ))}
+          <div className="h-[130px] md:w-[300px] p-2 md:p-6 border rounded-lg border-gray-200 flex flex-col justify-center gap-3 items-center stat-card">
+            <span className="font-bold text-4xl">{loading ? "X" : tokens.length}</span>
+            <span className="font-thin text-base md:text-lg">TOKENS CREATED</span>
           </div>
-        )}
+          <div className="h-[130px] md:w-[300px] p-2 text-center md:p-6 border rounded-lg border-gray-200 flex flex-col justify-center gap-3 items-center stat-card">
+            <span className="font-bold text-4xl">4+</span>
+            <span className="font-thin text-base md:text-lg">CHAINS SUPPORTED</span>
+          </div>
+        </div>
+        <CoreCapabilities/>
+        <ExploreTokens/>
+        <Comprehensive/>
+        <IntegratedEcosystem/>
+        <ConsultUs/>
       </div>
     </div>
   );

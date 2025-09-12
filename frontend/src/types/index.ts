@@ -1,4 +1,6 @@
 import React from 'react';
+import { PublicKey } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
 
 export interface TokenTemplate {
     key: string;
@@ -294,3 +296,164 @@ export interface StepProps {
     stepKey: string;
     onHeaderClick: (stepKey: string) => void;
 }
+
+export interface DeploymentOption {
+    name: string;
+    logo: string;
+    description: string;
+    availableDexes: string;
+    cost: string;
+    estimatedTime: string;
+    disabled?: boolean;
+}
+
+export interface Token {
+    id: number;
+    mintAddress: string;
+    name: string;
+    symbol: string;
+    description: string;
+    supply: string;
+    decimals: number;
+    avatarUrl: string;
+    bannerUrl: string;
+    owner: string;
+    selectedTemplate: string;
+    selectedPricing: string;
+    selectedExchange: string;
+    initialPrice: string;
+    finalPrice: string;
+    targetRaise: string;
+    reserveRatio: string;
+    curveType: string;
+    launchLiquidityOnName: string;
+    liquiditySource: string;
+    liquidityData: {
+      type: string;
+      solAmount: number;
+    };
+    liquidityType: string;
+    liquidityPercentage: number;
+    liquidityLockupPeriod: number;
+    isAutoBotProtectionEnabled: boolean;
+    isAutoListingEnabled: boolean;
+    isPriceProtectionEnabled: boolean;
+    mintFee: string;
+    transferFee: string;
+    burnFee: string;
+    feeRecipientAddress: string;
+    adminControlsEnabled: boolean;
+    adminControlsWalletAddress: string;
+    softCap: string;
+    hardCap: string;
+    scheduleLaunchEnabled: boolean;
+    launchDate: string;
+    endDate: string;
+    minimumContribution: string;
+    maximumContribution: string;
+    tokenPrice: string;
+    maxTokenPerWallet: string;
+    distributionDelay: number;
+    revokeMintAuthorityEnabled: boolean;
+    revokeMintAuthorityWalletAddress: string;
+    revokeFreezeAuthorityEnabled: boolean;
+    revokeFreezeAuthorityWalletAddress: string;
+    adminWalletAddress: string;
+    adminStructure: string;
+    tokenOwnerWalletAddress: string;
+    numberOfSignatures: number;
+    mintAuthorityWalletAddress: string;
+    freezeAuthorityWalletAddress: string;
+    createdAt: string;
+    updatedAt: string;
+    allocations: Array<{
+      id: number;
+      tokenId: number;
+      description: string;
+      percentage: string;
+      walletAddress: string;
+      lockupPeriod: number;
+      vestingEnabled: boolean;
+      vestingDescription: string;
+      vestingPercentage: string;
+      vestingCliff: number;
+      vestingDuration: number;
+      vestingInterval: number;
+      createdAt: string;
+    }>;
+    social: {
+      website: string;
+      twitter: string;
+      telegram: string;
+      discord: string;
+      farcaster: string;
+    };
+}
+
+export interface Pool {
+    bump: number;
+    configId: PublicKey;
+    creatorFeesMintA: BN;
+    creatorFeesMintB: BN;
+    enableCreatorFee: boolean;
+    epoch: BN;
+    feeOn: number;
+    fundFeesMintA: BN;
+    fundFeesMintB: BN;
+    lpAmount: BN;
+    lpDecimals: number;
+    mintA: PublicKey;
+    mintB: PublicKey;
+    mintDecimalA: number;
+    mintDecimalB: number;
+    mintLp: PublicKey;
+    mintProgramA: PublicKey;
+    mintProgramB: PublicKey;
+    observationId: PublicKey;
+    openTime: BN;
+    poolCreator: PublicKey;
+    poolId: PublicKey;
+    protocolFeesMintA: BN;
+    protocolFeesMintB: BN;
+    status: number;
+    vaultA: PublicKey;
+    vaultB: PublicKey;
+}
+
+export interface TokenMetadata {
+    name: string;
+    symbol: string;
+    image?: string;
+    description?: string;
+}
+
+export interface PoolMetric {
+    label: string;
+    value: string;
+    isHighlighted?: boolean;
+}
+
+export interface EnhancedPool extends Pool {
+    // Display information
+    token1Metadata: TokenMetadata;
+    token2Metadata: TokenMetadata;
+    token1Icon: string;
+    token2Icon: string;
+    poolName: string;
+    chain: {
+        name: string;
+        icon: string;
+    };
+    platforms: Array<{
+        platform: string;
+        platformIcon: string;
+    }>;
+    metrics: PoolMetric[];
+    isExpanded?: boolean;
+    position?: {
+        value: string;
+        apr: string;
+        poolShare: string;
+    };
+}
+
